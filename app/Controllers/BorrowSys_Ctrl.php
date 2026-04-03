@@ -75,6 +75,9 @@ class BorrowSys_Ctrl extends BaseController {
             echo json_encode($this->mybrmod->borrowTool());
             break;
         
+        case 'DO-RETURN':
+            echo json_encode($this->mybrmod->returnTool());
+            break;
 
 
 

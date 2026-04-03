@@ -120,19 +120,20 @@ class MyBrwngModel extends Model {
                                 AND    `user_code` = '{$user_code}'");
 
         // Recent borrowings (last 5)
-        $q      = $this->mybsdbmod->exec("SELECT 
-                                            `tool_name`,
-                                            DATE_FORMAT(`borrowed_at`, '%b %d, %Y') AS borrowed_at,
-                                            DATE_FORMAT(`due_date`,    '%b %d, %Y') AS due_date,
-                                            CASE `status`
-                                                WHEN 1 THEN 'Active'
-                                                WHEN 2 THEN 'Returned'
-                                                WHEN 3 THEN 'Overdue'
-                                            END AS status
-                                        FROM `borrowings` 
-                                        WHERE `user_code` = '{$user_code}'
-                                        ORDER BY `created_at` DESC 
-                                        LIMIT 5");
+        $q = $this->mybsdbmod->exec("SELECT 
+                                        `brw_code`,       -- ← ADD
+                                        `tool_name`,
+                                        DATE_FORMAT(`borrowed_at`, '%b %d, %Y') AS borrowed_at,
+                                        DATE_FORMAT(`due_date`,    '%b %d, %Y') AS due_date,
+                                        CASE `status`
+                                            WHEN 1 THEN 'Active'
+                                            WHEN 2 THEN 'Returned'
+                                            WHEN 3 THEN 'Overdue'
+                                        END AS status
+                                    FROM `borrowings` 
+                                    WHERE `user_code` = '{$user_code}'
+                                    ORDER BY `created_at` DESC 
+                                    LIMIT 5");
         $recent = $q->getResultArray();
 
         return [
@@ -199,5 +200,39 @@ class MyBrwngModel extends Model {
 
         return ['status' => 'ok'];
     } // end borrowTool
+
+    public function returnTool() {
+        $user_code = $this->mybsdbmod->session->get('user_code');
+        $brw_code  = $this->mybsdbmod->request->getPost('brw_code');
+
+        if (empty($brw_code)) {
+            return ['status' => 'error', 'message' => 'Invalid request.'];
+        }
+
+        // check borrowing exists and belongs to this user
+        $q = $this->mybsdbmod->exec("SELECT * FROM `borrowings` 
+                                    WHERE `brw_code`  = '{$brw_code}' 
+                                    AND   `user_code` = '{$user_code}' 
+                                    AND   `status`    IN (1, 3)
+                                    LIMIT 1");
+        if ($q->getNumRows() == 0) {
+            return ['status' => 'error', 'message' => 'Borrowing record not found.'];
+        }
+
+        $borrowing = $q->getRowArray();
+
+        // update borrowing status to returned
+        $this->mybsdbmod->exec("UPDATE `borrowings` 
+                                SET    `status`      = 2, 
+                                    `returned_at` = CURDATE() 
+                                WHERE  `brw_code`    = '{$brw_code}'");
+
+        // increase tool available count back
+        $this->mybsdbmod->exec("UPDATE `tools` 
+                                SET    `available` = `available` + 1 
+                                WHERE  `tool_code` = '{$borrowing['tool_code']}'");
+
+        return ['status' => 'ok'];
+    } // end returnTool
 
 } // end MyBrwngModel

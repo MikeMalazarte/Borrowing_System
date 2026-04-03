@@ -51,16 +51,38 @@ $user_code = session()->get('user_code');
                         <th class="fw-normal">Borrowed</th>
                         <th class="fw-normal">Due</th>
                         <th class="fw-normal">Status</th>
+                        <th class="fw-normal">Action</th> 
                     </tr>
                 </thead>
                 <tbody id="recent_borrowings">
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-3">
+                        <td colspan="5" class="text-center text-muted py-3">
                             <small>Loading...</small>
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Return Modal -->
+<div class="modal fade" id="modalReturn" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-normal">Return Tool</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="return_msg"></div>
+                <input type="hidden" id="return_brw_code">
+                <p class="small text-muted mb-0">Are you sure you want to return <strong id="return_tool_name"></strong>?</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm btn-dark" id="btnConfirmReturn">Confirm Return</button>
+            </div>
         </div>
     </div>
 </div>
