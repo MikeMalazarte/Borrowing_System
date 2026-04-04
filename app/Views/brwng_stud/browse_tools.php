@@ -21,14 +21,46 @@
             <div class="modal-body">
                 <div id="modal_msg"></div>
                 <input type="hidden" id="modal_tool_code">
+
+                <!-- Borrow Date -->
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Borrow Date</label>
+                    <input type="date" class="form-control form-control-sm"
+                        id="borrow_date"
+                        value="<?= date('Y-m-d') ?>"
+                        min="<?= date('Y-m-d') ?>">
+                </div>
+
+                <!-- Borrow Time -->
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Borrow Time</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">From</label>
+                            <input type="time" class="form-control form-control-sm"
+                                id="borrow_time_from">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">To</label>
+                            <input type="time" class="form-control form-control-sm"
+                                id="borrow_time_to">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Due Date -->
                 <div class="mb-3">
                     <label class="form-label small text-muted">Due Date</label>
-                    <input type="date" class="form-control form-control-sm" id="borrow_due_date"
+                    <input type="date" class="form-control form-control-sm"
+                        id="borrow_due_date"
                         min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
                 </div>
+
             </div>
             <div class="modal-footer border-0 pt-0">
-                <button class="btn btn-sm btn-dark" id="btnConfirmBorrow">Confirm Borrow</button>
+                <button class="btn btn-sm btn-dark" id="btnConfirmBorrow">
+                    Confirm Borrow
+                </button>
             </div>
         </div>
     </div>

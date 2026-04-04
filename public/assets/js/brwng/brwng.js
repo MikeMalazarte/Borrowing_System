@@ -94,124 +94,123 @@ var BrwngSys = function () {
     });
     };
 
-this.loadDashboard = function () {
-    var self = this;
+    this.loadDashboard = function () {
+        var self = this;
 
-    // open return modal
-    $(document).on('click', '.btnReturn', function () {
-        var brw_code  = $(this).data('brw_code');
-        var tool_name = $(this).data('tool_name');
-        $('#return_brw_code').val(brw_code);
-        $('#return_tool_name').text(tool_name);
-        $('#return_msg').html('');
-        var modal = new bootstrap.Modal(document.getElementById('modalReturn'));
-        modal.show();
-    });
+        // open return modal
+        $(document).on('click', '.btnReturn', function () {
+            var brw_code  = $(this).data('brw_code');
+            var tool_name = $(this).data('tool_name');
+            $('#return_brw_code').val(brw_code);
+            $('#return_tool_name').text(tool_name);
+            $('#return_msg').html('');
+            var modal = new bootstrap.Modal(document.getElementById('modalReturn'));
+            modal.show();
+        });
 
-    // confirm return
-    $(document).on('click', '#btnConfirmReturn', function () {
-        var brw_code = $('#return_brw_code').val();
+        // confirm return
+        $(document).on('click', '#btnConfirmReturn', function () {
+            var brw_code = $('#return_brw_code').val();
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : {
+                    meaction : 'DO-RETURN',
+                    brw_code : brw_code
+                },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        $('#return_msg').html('<div class="alert alert-success py-2 small">Returned successfully!</div>');
+                        setTimeout(function () {
+                            bootstrap.Modal.getInstance(document.getElementById('modalReturn')).hide();
+                            self.loadDashboard();
+                        }, 1500);
+                    } else {
+                        $('#return_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                    }
+                },
+                error : function () {
+                    $('#return_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+                }
+            });
+        });
+
+        // ✅ KEEP YOUR ORIGINAL AJAX CALL WITH FULL SUCCESS FUNCTION
         $.ajax({
             type     : 'POST',
             url      : mesiteurl + 'Borrowing-System',
-            data     : {
-                meaction : 'DO-RETURN',
-                brw_code : brw_code
-            },
+            data     : { meaction : 'GET-DASHBOARD-STATS' },
             dataType : 'json',
             success  : function (data) {
-                if (data.status === 'ok') {
-                    $('#return_msg').html('<div class="alert alert-success py-2 small">Returned successfully!</div>');
-                    setTimeout(function () {
-                        bootstrap.Modal.getInstance(document.getElementById('modalReturn')).hide();
-                        self.loadDashboard();
-                    }, 1500);
-                } else {
-                    $('#return_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                console.log('Dashboard data:', data);
+
+                if (!data.recent) {
+                    console.error('recent is missing from response');
+                    return;
                 }
+
+                // stat cards
+                $('#stat_active').text(data.active);
+                $('#stat_total').text(data.total);
+                $('#stat_available').text(data.available);
+
+                // recent borrowings table
+                var html = '';
+                if (data.recent.length === 0) {
+                    html = '<tr><td colspan="6" class="text-center text-muted py-3"><small>No borrowings yet.</small></td></tr>';
+                } else {
+                    $.each(data.recent, function (i, row) {
+                        var badge = '';
+                        if (row.status == 'Active') {
+                            badge = '<span class="badge" style="background:#f0faf0; color:#3a7d44; font-size:11px;">Active</span>';
+                        } else if (row.status == 'Overdue') {
+                            badge = '<span class="badge" style="background:#fff8f0; color:#b35900; font-size:11px;">Overdue</span>';
+                        } else {
+                            badge = '<span class="badge" style="background:#f5f5f5; color:#888; font-size:11px;">Returned</span>';
+                        }
+
+                        var action = '';
+                        if (row.status == 'Active' || row.status == 'Overdue') {
+                            // only show Return button
+                            action = '<button class="btn btn-sm btnReturn" '
+                                + 'style="font-size:11px; border: 0.5px solid #e9e9e9;" '
+                                + 'data-brw_code="' + row.brw_code + '" '
+                                + 'data-tool_name="' + row.tool_name + '">'
+                                + 'Return'
+                                + '</button>';
+                        } else {
+                            // returned — show Borrow Again button
+                            action = '<button class="btn btn-sm btnBorrowAgain" '
+                                + 'style="font-size:11px; border: 0.5px solid #1a1a1a; background:#1a1a1a; color:#fff;" '
+                                + 'data-tool_code="' + row.tool_code + '" '
+                                + 'data-tool_name="' + row.tool_name + '">'
+                                + 'Borrow Again'
+                                + '</button>';
+                        }
+
+                        html += '<tr>' +
+                            '<td>' + row.tool_name  + '</td>' +                      // 1. Tool
+                            '<td class="text-muted">' + row.borrowed_at + '</td>' +  // 2. Borrowed
+                            '<td class="text-muted">' + row.time_from + ' - ' + row.time_to + '</td>' + // 3. Time Period
+                            '<td class="text-muted">' + row.due_date    + '</td>' +  // 4. Due
+                            '<td>' + badge  + '</td>' +                              // 5. Status
+                            '<td>' + action + '</td>' +                              // 6. Action
+                            '</tr>';
+                    });
+                }
+                $('#recent_borrowings').html(html);
             },
-            error : function () {
-                $('#return_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+            error : function (xhr) {
+                console.error('AJAX error:', xhr.responseText);
             }
         });
-    });
-
-    // ✅ KEEP YOUR ORIGINAL AJAX CALL WITH FULL SUCCESS FUNCTION
-    $.ajax({
-        type     : 'POST',
-        url      : mesiteurl + 'Borrowing-System',
-        data     : { meaction : 'GET-DASHBOARD-STATS' },
-        dataType : 'json',
-        success  : function (data) {
-            console.log('Dashboard data:', data);
-
-            if (!data.recent) {
-                console.error('recent is missing from response');
-                return;
-            }
-
-            // stat cards
-            $('#stat_active').text(data.active);
-            $('#stat_total').text(data.total);
-            $('#stat_available').text(data.available);
-
-            // recent borrowings table
-            var html = '';
-            if (data.recent.length === 0) {
-                html = '<tr><td colspan="5" class="text-center text-muted py-3"><small>No borrowings yet.</small></td></tr>';
-            } else {
-                $.each(data.recent, function (i, row) {
-                    var badge = '';
-                    if (row.status == 'Active') {
-                        badge = '<span class="badge" style="background:#f0faf0; color:#3a7d44; font-size:11px;">Active</span>';
-                    } else if (row.status == 'Overdue') {
-                        badge = '<span class="badge" style="background:#fff8f0; color:#b35900; font-size:11px;">Overdue</span>';
-                    } else {
-                        badge = '<span class="badge" style="background:#f5f5f5; color:#888; font-size:11px;">Returned</span>';
-                    }
-
-                    var action = '';
-                    if (row.status == 'Active' || row.status == 'Overdue') {
-                        // only show Return button
-                        action = '<button class="btn btn-sm btnReturn" '
-                            + 'style="font-size:11px; border: 0.5px solid #e9e9e9;" '
-                            + 'data-brw_code="' + row.brw_code + '" '
-                            + 'data-tool_name="' + row.tool_name + '">'
-                            + 'Return'
-                            + '</button>';
-                    } else {
-                        // returned — show Borrow Again button
-                        action = '<button class="btn btn-sm btnBorrowAgain" '
-                            + 'style="font-size:11px; border: 0.5px solid #1a1a1a; background:#1a1a1a; color:#fff;" '
-                            + 'data-tool_code="' + row.tool_code + '" '
-                            + 'data-tool_name="' + row.tool_name + '">'
-                            + 'Borrow Again'
-                            + '</button>';
-                    }
-
-                    html += '<tr>' +
-                        '<td>' + row.tool_name  + '</td>' +
-                        '<td class="text-muted">' + row.borrowed_at + '</td>' +
-                        '<td class="text-muted">' + row.due_date    + '</td>' +
-                        '<td>' + badge  + '</td>' +
-                        '<td>' + action + '</td>' +
-                        '</tr>';
-                });
-            }
-            $('#recent_borrowings').html(html);
-        },
-        error : function (xhr) {
-            console.error('AJAX error:', xhr.responseText);
-        }
-    });
-};
-
+    };
 
 
     this.loadTools = function () {
         var self = this;
 
-        // load tools on page load
         self.fetchTools('');
 
         // search
@@ -228,19 +227,41 @@ this.loadDashboard = function () {
             $('#modal_tool_code').val(tool_code);
             $('#modal_tool_name').text(tool_name);
             $('#modal_msg').html('');
+            $('#borrow_time_from').val('');
+            $('#borrow_time_to').val('');
             $('#borrow_due_date').val('');
+
+            // same date allowed — min due = borrow date
+            var today = new Date().toISOString().split('T')[0];
+            $('#borrow_date').val(today);
+            $('#borrow_due_date').attr('min', today); 
 
             var modal = new bootstrap.Modal(document.getElementById('modalBorrow'));
             modal.show();
         });
 
+        // when borrow date changes → due date min = same borrow date
+        $(document).on('change', '#borrow_date', function () {
+            var borrowDate = $(this).val();
+            $('#borrow_due_date').attr('min', borrowDate); 
+            $('#borrow_due_date').val('');
+        });
+
         // confirm borrow
         $(document).on('click', '#btnConfirmBorrow', function () {
-            var tool_code = $('#modal_tool_code').val();
-            var due_date  = $('#borrow_due_date').val();
+            var tool_code   = $('#modal_tool_code').val();
+            var borrow_date = $('#borrow_date').val();
+            var time_from   = $('#borrow_time_from').val();
+            var time_to     = $('#borrow_time_to').val();
+            var due_date    = $('#borrow_due_date').val();
 
-            if (due_date === '') {
-                $('#modal_msg').html('<div class="alert alert-danger py-2 small">Please select a due date.</div>');
+            if (borrow_date === '' || time_from === '' || time_to === '' || due_date === '') {
+                $('#modal_msg').html('<div class="alert alert-danger py-2 small">Please fill in all fields.</div>');
+                return false;
+            }
+
+            if (time_from >= time_to) {
+                $('#modal_msg').html('<div class="alert alert-danger py-2 small">Time From must be earlier than Time To.</div>');
                 return false;
             }
 
@@ -248,9 +269,12 @@ this.loadDashboard = function () {
                 type     : 'POST',
                 url      : mesiteurl + 'Borrowing-System',
                 data     : {
-                    meaction  : 'DO-BORROW',
-                    tool_code : tool_code,
-                    due_date  : due_date
+                    meaction    : 'DO-BORROW',
+                    tool_code   : tool_code,
+                    borrow_date : borrow_date,
+                    time_from   : time_from,
+                    time_to     : time_to,
+                    due_date    : due_date
                 },
                 dataType : 'json',
                 success  : function (data) {
@@ -284,29 +308,31 @@ this.loadDashboard = function () {
                     html = '<div class="col-12 text-center text-muted py-4"><small>No tools found.</small></div>';
                 } else {
                     $.each(data, function (i, tool) {
-                        var available  = parseInt(tool.available);
-                        var badge      = available > 0
+                        var available = parseInt(tool.available);
+                        var badge     = available > 0
                             ? '<span style="background:#f0faf0; color:#3a7d44; font-size:11px; padding:2px 8px; border-radius:4px;">Available</span>'
                             : '<span style="background:#fff0f0; color:#b33a3a; font-size:11px; padding:2px 8px; border-radius:4px;">Unavailable</span>';
-                        var btn        = available > 0
-                            ? '<button class="btn btn-sm btn-dark btnBorrow" style="font-size:12px;" data-tool_code="' + tool.tool_code + '" data-tool_name="' + tool.tool_name + '">Borrow</button>'
+                        var btn       = available > 0
+                            ? '<button class="btn btn-sm btn-dark btnBorrow" style="font-size:12px;" '
+                            + 'data-tool_code="' + tool.tool_code + '" '
+                            + 'data-tool_name="' + tool.tool_name + '">Borrow</button>'
                             : '<button class="btn btn-sm btn-secondary" style="font-size:12px;" disabled>Borrow</button>';
 
-                        html += '<div class="col-md-4">' +
-                            '<div class="card border-0 h-100" style="border: 0.5px solid #e9e9e9 !important;">' +
-                            '<div class="card-body">' +
-                            '<div class="d-flex justify-content-between align-items-start mb-2">' +
-                            '<p class="small fw-500 mb-0">' + tool.tool_name + '</p>' +
-                            badge +
-                            '</div>' +
-                            '<p class="small text-muted mb-3">' + tool.description + '</p>' +
-                            '<div class="d-flex justify-content-between align-items-center">' +
-                            '<small class="text-muted">' + tool.available + ' available</small>' +
-                            btn +
-                            '</div>' +
-                            '</div>' +
-                            '</div>' +
-                            '</div>';
+                        html += '<div class="col-md-4">'
+                            + '<div class="card border-0 h-100" style="border: 0.5px solid #e9e9e9 !important;">'
+                            + '<div class="card-body">'
+                            + '<div class="d-flex justify-content-between align-items-start mb-2">'
+                            + '<p class="small fw-500 mb-0">' + tool.tool_name + '</p>'
+                            + badge
+                            + '</div>'
+                            + '<p class="small text-muted mb-3">' + tool.description + '</p>'
+                            + '<div class="d-flex justify-content-between align-items-center">'
+                            + '<small class="text-muted">' + tool.available + ' available</small>'
+                            + btn
+                            + '</div>'
+                            + '</div>'
+                            + '</div>'
+                            + '</div>';
                     });
                 }
                 $('#tools_list').html(html);
@@ -314,6 +340,27 @@ this.loadDashboard = function () {
             error : function () {
                 $('#tools_list').html('<div class="col-12 text-center text-muted">Error loading tools.</div>');
             }
+        });
+    };
+
+    this.doLogout = function () {
+        $(document).on('click', '#btnLogout', function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : { meaction : 'DO-LOGOUT' },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        window.location.href = mesiteurl + 'Borrowing-System';
+                    }
+                },
+                error : function () {
+                    alert('Something went wrong. Try again.');
+                }
+            });
         });
     };
     
@@ -325,7 +372,8 @@ $(document).ready(function () {
     var me = new BrwngSys();
     me.doLogin();
     me.doRegister();
+    me.doLogout();
 
     if ($('#stat_active').length > 0)  { me.loadDashboard(); }
-    if ($('#tools_list').length > 0)   { me.loadTools(); }    // ← add this
+    if ($('#tools_list').length > 0)   { me.loadTools(); }    
 });

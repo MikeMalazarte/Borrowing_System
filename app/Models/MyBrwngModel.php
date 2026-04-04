@@ -38,7 +38,9 @@ class MyBrwngModel extends Model {
             'is_logged_in' => true,
             'user_code'    => $user['user_code'],
             'full_name'    => $user['full_name'],
-            'user_role'    => $user['user_role']
+            'user_role'    => $user['user_role'],
+            'course'       => $user['course'],
+            'year_level'   => $user['year_level']
         ]);
 
         return ['status' => 'ok', 'user_role' => $user['user_role']];
@@ -121,8 +123,11 @@ class MyBrwngModel extends Model {
 
         // Recent borrowings (last 5)
         $q = $this->mybsdbmod->exec("SELECT 
-                                        `brw_code`,       -- ← ADD
+                                        `brw_code`,
+                                        `tool_code`,
                                         `tool_name`,
+                                        DATE_FORMAT(`time_from`,   '%h:%i %p')  AS time_from,
+                                        DATE_FORMAT(`time_to`,     '%h:%i %p')  AS time_to,
                                         DATE_FORMAT(`borrowed_at`, '%b %d, %Y') AS borrowed_at,
                                         DATE_FORMAT(`due_date`,    '%b %d, %Y') AS due_date,
                                         CASE `status`
@@ -160,15 +165,19 @@ class MyBrwngModel extends Model {
     }
 
     public function borrowTool() {
-        $user_code = $this->mybsdbmod->session->get('user_code');
-        $tool_code = $this->mybsdbmod->request->getPost('tool_code');
-        $due_date  = $this->mybsdbmod->request->getPost('due_date');
+        $user_code   = $this->mybsdbmod->session->get('user_code');
+        $tool_code   = $this->mybsdbmod->request->getPost('tool_code');
+        $borrow_date = $this->mybsdbmod->request->getPost('borrow_date');
+        $time_from   = $this->mybsdbmod->request->getPost('time_from');
+        $time_to     = $this->mybsdbmod->request->getPost('time_to');
+        $due_date    = $this->mybsdbmod->request->getPost('due_date');
 
-        if (empty($tool_code) || empty($due_date)) {
-            return ['status' => 'error', 'message' => 'Invalid request.'];
+        if (empty($tool_code) || empty($borrow_date) || empty($time_from) || 
+            empty($time_to)   || empty($due_date)) {
+            return ['status' => 'error', 'message' => 'Please fill in all fields.'];
         }
 
-        // check tool exists and is available
+        // check tool available
         $q = $this->mybsdbmod->exec("SELECT * FROM `tools` 
                                     WHERE `tool_code` = '{$tool_code}' 
                                     AND   `available` > 0 
@@ -185,21 +194,23 @@ class MyBrwngModel extends Model {
         $row      = $q->getRowArray();
         $brw_code = 'BRW-' . str_pad($row['total'] + 1, 5, '0', STR_PAD_LEFT);
 
-        // insert borrowing record
+        // insert with time fields
         $this->mybsdbmod->exec("INSERT INTO `borrowings` 
-                                (`brw_code`, `user_code`, `tool_code`, `tool_name`, 
+                                (`brw_code`, `user_code`, `tool_code`, `tool_name`,
+                                `borrow_date`, `time_from`, `time_to`,
                                 `borrowed_at`, `due_date`, `status`) 
                                 VALUES 
                                 ('{$brw_code}', '{$user_code}', '{$tool_code}', '{$tool['tool_name']}',
+                                '{$borrow_date}', '{$time_from}', '{$time_to}',
                                 CURDATE(), '{$due_date}', 1)");
 
-        // decrease available count
+        // decrease available
         $this->mybsdbmod->exec("UPDATE `tools` 
                                 SET `available` = `available` - 1 
                                 WHERE `tool_code` = '{$tool_code}'");
 
         return ['status' => 'ok'];
-    } // end borrowTool
+    }
 
     public function returnTool() {
         $user_code = $this->mybsdbmod->session->get('user_code');

@@ -1,11 +1,17 @@
 <?php
 $full_name = session()->get('full_name');
 $user_code = session()->get('user_code');
+$course = session()->get('course');
+$year_level = session()->get('year_level');
 ?>
+
 
 <!-- Greeting -->
 <p class="text-muted small mb-0">Good day,</p>
-<h5 class="fw-normal mb-4"><?= esc($full_name) ?></h5>
+<h5 class="fw-normal mb-1"><?= esc($full_name) ?></h5>  <!-- ← mb-1 not mb-4 -->
+<p class="text-muted small mb-4"><?= esc($course) ?> — <?= esc($year_level) ?></p> <!-- ← p tag not h5 -->
+
+
 
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
@@ -49,6 +55,7 @@ $user_code = session()->get('user_code');
                     <tr class="text-muted" style="border-bottom: 0.5px solid #e9e9e9;">
                         <th class="fw-normal">Tool</th>
                         <th class="fw-normal">Borrowed</th>
+                        <th class="fw-normal">Time Period</th>
                         <th class="fw-normal">Due</th>
                         <th class="fw-normal">Status</th>
                         <th class="fw-normal">Action</th> 

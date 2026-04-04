@@ -79,6 +79,10 @@ class BorrowSys_Ctrl extends BaseController {
             echo json_encode($this->mybrmod->returnTool());
             break;
 
+        case 'DO-LOGOUT':
+            session()->destroy();
+            echo json_encode(['status' => 'ok']);
+            break;
 
 
 

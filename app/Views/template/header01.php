@@ -117,14 +117,6 @@
             class="<?= (isset($active_page) && $active_page == 'browse') ? 'active' : '' ?>">
             <i class="bi bi-search"></i> Browse Tools
         </a>
-        <a href="<?= base_url('Borrowing-System?meaction=MY-BORROWINGS') ?>"
-            class="<?= (isset($active_page) && $active_page == 'borrowings') ? 'active' : '' ?>">
-            <i class="bi bi-clipboard"></i> My Borrowings
-        </a>
-        <a href="<?= base_url('Borrowing-System?meaction=BORROW-HISTORY') ?>"
-            class="<?= (isset($active_page) && $active_page == 'history') ? 'active' : '' ?>">
-            <i class="bi bi-clock-history"></i> Borrow History
-        </a>
         <a href="<?= base_url('Borrowing-System?meaction=MY-PROFILE') ?>"
             class="<?= (isset($active_page) && $active_page == 'profile') ? 'active' : '' ?>">
             <i class="bi bi-person"></i> My Profile
@@ -135,7 +127,9 @@
     <div class="sidebar-footer">
         <p class="user-name"><?= session()->get('full_name') ?></p>
         <p class="user-code"><?= session()->get('user_code') ?></p>
-        <a href="#" id="btnLogout"><i class="bi bi-box-arrow-left"></i> Sign out</a>
+        <a href="#" id="btnLogout">
+            <i class="bi bi-box-arrow-left"></i> Sign out
+        </a>
     </div>
 
 </div>
