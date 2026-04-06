@@ -46,8 +46,8 @@ $year_level = session()->get('year_level');
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <p class="small fw-500 mb-0">Recent Borrowings</p>
-            <a href="<?= base_url('Borrowing-System?meaction=MY-BORROWINGS') ?>"
-                class="small text-muted text-decoration-none">View all</a>
+            <!-- <a href="<//base_url('Borrowing-System?meaction=MY-BORROWINGS') "
+                class="small text-muted text-decoration-none">View all</a> -->
         </div>
         <div class="table-responsive">
             <table class="table table-sm" style="font-size: 13px;">

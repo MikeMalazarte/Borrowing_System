@@ -190,9 +190,7 @@ class MyBrwngModel extends Model {
         $tool = $q->getRowArray();
 
         // generate borrow code
-        $q        = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings`");
-        $row      = $q->getRowArray();
-        $brw_code = 'BRW-' . str_pad($row['total'] + 1, 5, '0', STR_PAD_LEFT);
+        $brw_code = 'BRW-' . date('YmdHis') . rand(100, 999);
 
         // insert with time fields
         $this->mybsdbmod->exec("INSERT INTO `borrowings` 

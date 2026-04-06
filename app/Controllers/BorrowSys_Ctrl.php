@@ -50,7 +50,24 @@ class BorrowSys_Ctrl extends BaseController {
                 echo json_encode(['status' => 'error', 'message' => 'Unauthorized.']);
                 return;
             }
-            echo json_encode($this->mybrmod->getDashboardStats());
+            $data = $this->mybrmod->getDashboardStats();
+            echo json_encode([
+                'active'    => $data['active'],
+                'total'     => $data['total'],
+                'available' => $data['available'],
+                'recent'    => $data['recent']  // ← still returned for stat cards
+            ]);
+            break;
+
+        // ← ADD this new case for the HTML rows
+        case 'GET-DASHBOARD-RECS':
+            $user_role = $session->get('user_role');
+            if ($user_role != 2) {
+                echo 'Unauthorized.';
+                return;
+            }
+            $data = $this->mybrmod->getDashboardStats();
+            echo view('brwng_stud/dashboard_recs', ['recent' => $data['recent']]);
             break;
 
         case 'BROWSE-TOOLS':
@@ -83,6 +100,8 @@ class BorrowSys_Ctrl extends BaseController {
             session()->destroy();
             echo json_encode(['status' => 'ok']);
             break;
+
+        
 
 
 

@@ -114,10 +114,7 @@ var BrwngSys = function () {
             $.ajax({
                 type     : 'POST',
                 url      : mesiteurl + 'Borrowing-System',
-                data     : {
-                    meaction : 'DO-RETURN',
-                    brw_code : brw_code
-                },
+                data     : { meaction : 'DO-RETURN', brw_code : brw_code },
                 dataType : 'json',
                 success  : function (data) {
                     if (data.status === 'ok') {
@@ -136,73 +133,32 @@ var BrwngSys = function () {
             });
         });
 
-        // ✅ KEEP YOUR ORIGINAL AJAX CALL WITH FULL SUCCESS FUNCTION
+        // load stat cards via JSON
         $.ajax({
             type     : 'POST',
             url      : mesiteurl + 'Borrowing-System',
             data     : { meaction : 'GET-DASHBOARD-STATS' },
             dataType : 'json',
             success  : function (data) {
-                console.log('Dashboard data:', data);
-
-                if (!data.recent) {
-                    console.error('recent is missing from response');
-                    return;
-                }
-
-                // stat cards
                 $('#stat_active').text(data.active);
                 $('#stat_total').text(data.total);
                 $('#stat_available').text(data.available);
-
-                // recent borrowings table
-                var html = '';
-                if (data.recent.length === 0) {
-                    html = '<tr><td colspan="6" class="text-center text-muted py-3"><small>No borrowings yet.</small></td></tr>';
-                } else {
-                    $.each(data.recent, function (i, row) {
-                        var badge = '';
-                        if (row.status == 'Active') {
-                            badge = '<span class="badge" style="background:#f0faf0; color:#3a7d44; font-size:11px;">Active</span>';
-                        } else if (row.status == 'Overdue') {
-                            badge = '<span class="badge" style="background:#fff8f0; color:#b35900; font-size:11px;">Overdue</span>';
-                        } else {
-                            badge = '<span class="badge" style="background:#f5f5f5; color:#888; font-size:11px;">Returned</span>';
-                        }
-
-                        var action = '';
-                        if (row.status == 'Active' || row.status == 'Overdue') {
-                            // only show Return button
-                            action = '<button class="btn btn-sm btnReturn" '
-                                + 'style="font-size:11px; border: 0.5px solid #e9e9e9;" '
-                                + 'data-brw_code="' + row.brw_code + '" '
-                                + 'data-tool_name="' + row.tool_name + '">'
-                                + 'Return'
-                                + '</button>';
-                        } else {
-                            // returned — show Borrow Again button
-                            action = '<button class="btn btn-sm btnBorrowAgain" '
-                                + 'style="font-size:11px; border: 0.5px solid #1a1a1a; background:#1a1a1a; color:#fff;" '
-                                + 'data-tool_code="' + row.tool_code + '" '
-                                + 'data-tool_name="' + row.tool_name + '">'
-                                + 'Borrow Again'
-                                + '</button>';
-                        }
-
-                        html += '<tr>' +
-                            '<td>' + row.tool_name  + '</td>' +                      // 1. Tool
-                            '<td class="text-muted">' + row.borrowed_at + '</td>' +  // 2. Borrowed
-                            '<td class="text-muted">' + row.time_from + ' - ' + row.time_to + '</td>' + // 3. Time Period
-                            '<td class="text-muted">' + row.due_date    + '</td>' +  // 4. Due
-                            '<td>' + badge  + '</td>' +                              // 5. Status
-                            '<td>' + action + '</td>' +                              // 6. Action
-                            '</tr>';
-                    });
-                }
-                $('#recent_borrowings').html(html);
             },
             error : function (xhr) {
-                console.error('AJAX error:', xhr.responseText);
+                console.error('Stats error:', xhr.responseText);
+            }
+        });
+
+        // load table rows from PHP view — no HTML in JS
+        $.ajax({
+            type    : 'POST',
+            url     : mesiteurl + 'Borrowing-System',
+            data    : { meaction : 'GET-DASHBOARD-RECS' },
+            success : function (html) {
+                $('#recent_borrowings').html(html); // ← directly insert PHP rendered HTML
+            },
+            error : function () {
+                $('#recent_borrowings').html('<tr><td colspan="6" class="text-center text-muted">Error loading data.</td></tr>');
             }
         });
     };
