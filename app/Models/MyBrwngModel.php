@@ -40,7 +40,8 @@ class MyBrwngModel extends Model {
             'full_name'    => $user['full_name'],
             'user_role'    => $user['user_role'],
             'course'       => $user['course'],
-            'year_level'   => $user['year_level']
+            'year_level'   => $user['year_level'],
+            'email'        => $user['email']
         ]);
 
         return ['status' => 'ok', 'user_role' => $user['user_role']];

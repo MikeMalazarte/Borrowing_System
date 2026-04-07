@@ -77,12 +77,6 @@ class BorrowSys_Ctrl extends BaseController {
             echo view('template/footer01');
             break;
 
-        case 'MY-BORROWINGS':
-            $data['active_page'] = 'borrowings';
-            echo view('template/header01', $data);
-            echo view('brwng/student/my_borrowings', $data);
-            echo view('template/footer01');
-            break;
 
         case 'GET-TOOLS':
             echo json_encode($this->mybrmod->getTools());
@@ -100,6 +94,14 @@ class BorrowSys_Ctrl extends BaseController {
             session()->destroy();
             echo json_encode(['status' => 'ok']);
             break;
+
+        case 'MY-PROFILE':
+            $data['active_page'] = 'profile';
+            echo view('template/header01', $data);
+            echo view('brwng_stud/profile', $data);
+            echo view('template/footer01');
+            break;
+
 
         
 
