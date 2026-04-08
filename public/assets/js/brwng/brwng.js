@@ -319,7 +319,57 @@ var BrwngSys = function () {
             });
         });
     };
-    
+
+    this.changePass = function () {
+        $(document).on('click', '#btnConfirmChangePassword', function () {
+            var current_password  = $.trim($('#current_password').val());
+            var new_password      = $.trim($('#new_password').val());
+            var confirm_password  = $.trim($('#confirm_password').val());
+
+            // Client-side validation
+            if (current_password === '' || new_password === '' || confirm_password === '') {
+                $('#change_pw_msg').html('<div class="alert alert-danger py-2 small">Please fill in all fields.</div>');
+                return false;
+            }
+
+            if (new_password !== confirm_password) {
+                $('#change_pw_msg').html('<div class="alert alert-danger py-2 small">New passwords do not match.</div>');
+                return false;
+            }
+
+            if (new_password === current_password) {
+                $('#change_pw_msg').html('<div class="alert alert-danger py-2 small">New password must differ from current password.</div>');
+                return false;
+            }
+
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : {
+                    meaction         : 'DO-CHANGE-PASSWORD',
+                    current_password : current_password,
+                    new_password     : new_password
+                },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        $('#change_pw_msg').html('<div class="alert alert-success py-2 small">Password updated successfully!</div>');
+                        setTimeout(function () {
+                            bootstrap.Modal.getInstance(document.getElementById('modalChangePassword')).hide();
+                            $('#current_password, #new_password, #confirm_password').val('');
+                            $('#change_pw_msg').html('');
+                        }, 1500);
+                    } else {
+                        // Server says current password is wrong
+                        $('#change_pw_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                    }
+                },
+                error : function () {
+                    $('#change_pw_msg').html('<div class="alert alert-danger py-2 small">Something went wrong. Try again.</div>');
+                }
+            });
+        });
+    };  
 
 };
 
@@ -329,6 +379,7 @@ $(document).ready(function () {
     me.doLogin();
     me.doRegister();
     me.doLogout();
+    me.changePass();
 
     if ($('#stat_active').length > 0)  { me.loadDashboard(); }
     if ($('#tools_list').length > 0)   { me.loadTools(); }    

@@ -245,4 +245,38 @@ class MyBrwngModel extends Model {
         return ['status' => 'ok'];
     } // end returnTool
 
+    public function changePassword() {
+        $user_code        = $this->mybsdbmod->session->get('user_code');
+        $current_password = $this->mybsdbmod->request->getPost('current_password');
+        $new_password     = $this->mybsdbmod->request->getPost('new_password');
+
+        if (empty($current_password) || empty($new_password)) {
+            return ['status' => 'error', 'message' => 'Please fill in all fields.'];
+        }
+
+        // 1. Fetch current hashed password from DB
+        $q = $this->mybsdbmod->exec("SELECT `password` FROM `users` 
+                                    WHERE `user_code` = '{$user_code}' 
+                                    LIMIT 1");
+
+        if ($q->getNumRows() == 0) {
+            return ['status' => 'error', 'message' => 'User not found.'];
+        }
+
+        $user = $q->getRowArray();
+
+        // 2. Verify current password
+        if (!password_verify($current_password, $user['password'])) {
+            return ['status' => 'error', 'message' => 'Current password is incorrect.'];
+        }
+
+        // 3. Hash and update new password
+        $hashed = password_hash($new_password, PASSWORD_DEFAULT);
+        $this->mybsdbmod->exec("UPDATE `users` 
+                                SET    `password` = '{$hashed}' 
+                                WHERE  `user_code` = '{$user_code}'");
+
+        return ['status' => 'ok'];
+    }
+
 } // end MyBrwngModel

@@ -15,8 +15,6 @@ class BorrowSys_Ctrl extends BaseController {
         $session  = session();
 
 
-
-
         switch($meaction){
             
         case 'DO-LOGIN':
@@ -100,6 +98,10 @@ class BorrowSys_Ctrl extends BaseController {
             echo view('template/header01', $data);
             echo view('brwng_stud/profile', $data);
             echo view('template/footer01');
+            break;
+
+        case 'DO-CHANGE-PASSWORD':
+            echo json_encode($this->mybrmod->changePassword());
             break;
 
 
