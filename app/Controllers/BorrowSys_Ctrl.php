@@ -13,6 +13,10 @@ class BorrowSys_Ctrl extends BaseController {
     public function index() {
         $meaction = $this->request->getPostGet('meaction');
         $session  = session();
+        
+        if ($session->get('is_logged_in')) {
+            $this->mybrmod->updateOverdue();
+        }
 
 
         switch($meaction){

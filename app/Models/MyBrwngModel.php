@@ -115,22 +115,18 @@ class MyBrwngModel extends Model {
                                             WHERE `status` = 1");
         $available = $q->getRowArray()['total'] ?? 0;
 
-        // Update overdue status
-        $this->mybsdbmod->exec("UPDATE `borrowings` 
-                                SET    `status` = 3 
-                                WHERE  `status` = 1 
-                                AND    `due_date` < CURDATE()
-                                AND    `user_code` = '{$user_code}'");
-
         // Recent borrowings (last 5)
         $q = $this->mybsdbmod->exec("SELECT 
                                         `brw_code`,
                                         `tool_code`,
                                         `tool_name`,
-                                        DATE_FORMAT(`time_from`,   '%h:%i %p')  AS time_from,
-                                        DATE_FORMAT(`time_to`,     '%h:%i %p')  AS time_to,
+                                        DATE_FORMAT(`time_from`, '%h:%i %p') AS time_from,
+                                        DATE_FORMAT(`time_to`,   '%h:%i %p') AS time_to,
                                         DATE_FORMAT(`borrowed_at`, '%b %d, %Y') AS borrowed_at,
-                                        DATE_FORMAT(`due_date`,    '%b %d, %Y') AS due_date,
+                                        DATE_FORMAT(
+                                            CONCAT(`due_date`, ' ', COALESCE(`time_to`, '23:59:59')),
+                                            '%b %d, %Y %h:%i %p'
+                                        ) AS due_date,
                                         CASE `status`
                                             WHEN 1 THEN 'Active'
                                             WHEN 2 THEN 'Returned'
@@ -156,6 +152,13 @@ class MyBrwngModel extends Model {
             'returned'  => $returned
         ];
     } // end getDashboardStats
+
+    public function updateOverdue() {
+        $this->mybsdbmod->exec("UPDATE `borrowings` 
+                                SET    `status` = 3 
+                                WHERE  `status` = 1 
+                                AND    CONCAT(`due_date`, ' ', COALESCE(`time_to`, '23:59:59')) < NOW()");
+    }
 
     public function getTools() {
         $term   = $this->mybsdbmod->request->getPost('term');

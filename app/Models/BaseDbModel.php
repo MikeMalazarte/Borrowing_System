@@ -1,9 +1,6 @@
 <?php namespace App\Models;
-
 use CodeIgniter\Model;
-
 class BaseDBModel extends Model {
-
     protected $db;
     protected $request;
     protected $session;
@@ -13,6 +10,7 @@ class BaseDBModel extends Model {
         $this->db      = \Config\Database::connect();
         $this->request = \Config\Services::request();
         $this->session = session();
+        $this->db->query("SET time_zone = '+08:00'"); // ← after db is assigned
     }
 
     public function exec($sql) {

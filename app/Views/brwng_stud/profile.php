@@ -36,43 +36,49 @@ $initials = substr($initials, 0, 2);
     </div>
 </div>
 
-<!-- Personal Information -->
-<div class="card border-0 shadow-none mb-3" style="background:#fff; border: 0.5px solid #e9e9e9 !important;">
-    <div class="card-body">
-        <p class="text-uppercase text-muted mb-3" style="font-size:11px; letter-spacing:0.04em;">Personal Information</p>
-        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
-            <span class="text-muted">Full Name</span>
-            <span><?= esc($full_name) ?></span>
-        </div>
-        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
-            <span class="text-muted">Student ID</span>
-            <span><?= esc($user_code) ?></span>
-        </div>
-        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
-            <span class="text-muted">Course</span>
-            <span><?= esc($course) ?></span>
-        </div>
-        <div class="d-flex justify-content-between align-items-center py-2" style="font-size:13px;">
-            <span class="text-muted">Year Level</span>
-            <span><?= esc($year_level) ?></span>
+<div class="row g-3 mb-3">
+    <!-- Personal Information -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-none h-100" style="background:#fff; border: 0.5px solid #e9e9e9 !important;">
+            <div class="card-body">
+                <p class="text-uppercase text-muted mb-3" style="font-size:11px; letter-spacing:0.04em;">Personal Information</p>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
+                    <span class="text-muted">Full Name</span>
+                    <span><?= esc($full_name) ?></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
+                    <span class="text-muted">Student ID</span>
+                    <span><?= esc($user_code) ?></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
+                    <span class="text-muted">Course</span>
+                    <span><?= esc($course) ?></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2" style="font-size:13px;">
+                    <span class="text-muted">Year Level</span>
+                    <span><?= esc($year_level) ?></span>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Account -->
-<div class="card border-0 shadow-none mb-3" style="background:#fff; border: 0.5px solid #e9e9e9 !important;">
-    <div class="card-body">
-        <p class="text-uppercase text-muted mb-3" style="font-size:11px; letter-spacing:0.04em;">Account</p>
-        <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
-            <span class="text-muted">Email</span>
-            <span id="profile_email"><?= esc($email) ?></span>
-        </div>
-        <div class="d-flex justify-content-between align-items-center py-2" style="font-size:13px;">
-            <span class="text-muted">Password</span>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:13px;"
-                    data-bs-toggle="modal" data-bs-target="#modalChangePassword">
-                Change Password
-            </button>
+    <!-- Account -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-none h-100" style="background:#fff; border: 0.5px solid #e9e9e9 !important;">
+            <div class="card-body">
+                <p class="text-uppercase text-muted mb-3" style="font-size:11px; letter-spacing:0.04em;">Account</p>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="font-size:13px; border-color:#f0f0f0 !important;">
+                    <span class="text-muted">Email</span>
+                    <span id="profile_email"><?= esc($email) ?></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2" style="font-size:13px;">
+                    <span class="text-muted">Password</span>
+                    <button class="btn btn-sm btn-outline-secondary" style="font-size:13px;"
+                            data-bs-toggle="modal" data-bs-target="#modalChangePassword">
+                        Change Password
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

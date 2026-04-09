@@ -99,8 +99,8 @@ var BrwngSys = function () {
 
         // open return modal
         $(document).on('click', '.btnReturn', function () {
-            var brw_code  = $(this).data('brw_code');
-            var tool_name = $(this).data('tool_name');
+            var brw_code  = $(this).attr('data-brw_code');
+            var tool_name = $(this).attr('data-tool_name');
             $('#return_brw_code').val(brw_code);
             $('#return_tool_name').text(tool_name);
             $('#return_msg').html('');
@@ -187,11 +187,6 @@ var BrwngSys = function () {
             $('#borrow_time_from').val('');
             $('#borrow_time_to').val('');
             $('#borrow_due_date').val('');
-
-            // same date allowed — min due = borrow date
-            var today = new Date().toISOString().split('T')[0];
-            $('#borrow_date').val(today);
-            $('#borrow_due_date').attr('min', today); 
 
             var modal = new bootstrap.Modal(document.getElementById('modalBorrow'));
             modal.show();
@@ -382,7 +377,6 @@ $(document).ready(function () {
     me.doLogout();
     me.changePass();
 
-    if ($('#stat_active').length > 0)  { me.loadDashboard(); }
-    if ($('#tools_list').length > 0)   { me.loadTools(); } 
-    if ($('#stat_active').length > 0)   { me.loadDashboard(); }   
+    if ($('#stat_active').length > 0) { me.loadDashboard(); }
+    if ($('#tools_list').length > 0)  { me.loadTools(); }
 });
