@@ -53,8 +53,9 @@
                     <label class="form-label small text-muted">Due Date</label>
                     <input type="date" class="form-control form-control-sm"
                         id="borrow_due_date"
-                        min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
-                </div>
+                        min="<?= date('Y-m-d') ?>">              
+                    </div>
+
 
             </div>
             <div class="modal-footer border-0 pt-0">

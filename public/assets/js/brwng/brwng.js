@@ -206,6 +206,14 @@ var BrwngSys = function () {
             var time_from   = $('#borrow_time_from').val();
             var time_to     = $('#borrow_time_to').val();
             var due_date    = $('#borrow_due_date').val();
+            var now      = new Date();
+            var nowTime  = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+            var today    = now.toISOString().split('T')[0]; 
+
+            if (due_date === today && time_to <= nowTime) {
+                $('#modal_msg').html('<div class="alert alert-danger py-2 small">Due time must be after current time.</div>');
+                return false;
+            }
 
             if (borrow_date === '' || time_from === '' || time_to === '' || due_date === '') {
                 $('#modal_msg').html('<div class="alert alert-danger py-2 small">Please fill in all fields.</div>');
