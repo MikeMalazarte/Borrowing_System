@@ -53,7 +53,8 @@ class BorrowSys_Ctrl extends BaseController {
                 'active'    => $data['active'],
                 'total'     => $data['total'],
                 'available' => $data['available'],
-                'recent'    => $data['recent']  // ← still returned for stat cards
+                'recent'    => $data['recent'],
+                'returned'  => $data['returned']
             ]);
             break;
 

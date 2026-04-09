@@ -143,6 +143,7 @@ var BrwngSys = function () {
                 $('#stat_active').text(data.active);
                 $('#stat_total').text(data.total);
                 $('#stat_available').text(data.available);
+                $('#stat_returned').text(data.returned);
             },
             error : function (xhr) {
                 console.error('Stats error:', xhr.responseText);
@@ -382,5 +383,6 @@ $(document).ready(function () {
     me.changePass();
 
     if ($('#stat_active').length > 0)  { me.loadDashboard(); }
-    if ($('#tools_list').length > 0)   { me.loadTools(); }    
+    if ($('#tools_list').length > 0)   { me.loadTools(); } 
+    if ($('#stat_active').length > 0)   { me.loadDashboard(); }   
 });

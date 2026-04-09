@@ -142,11 +142,18 @@ class MyBrwngModel extends Model {
                                     LIMIT 5");
         $recent = $q->getResultArray();
 
+        $q        = $this->mybsdbmod->exec("SELECT COUNT(*) AS total 
+                                    FROM `borrowings` 
+                                    WHERE `user_code` = '{$user_code}' 
+                                    AND   `status`    = 2");
+        $returned = $q->getRowArray()['total'];
+
         return [
             'active'    => $active,
             'total'     => $total,
             'available' => $available,
-            'recent'    => $recent
+            'recent'    => $recent,
+            'returned'  => $returned
         ];
     } // end getDashboardStats
 

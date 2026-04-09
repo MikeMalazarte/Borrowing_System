@@ -86,15 +86,15 @@ $initials = substr($initials, 0, 2);
                 <div class="card border-0 shadow-none" style="background:#fafafa; border: 0.5px solid #e9e9e9 !important;">
                     <div class="card-body p-3">
                         <p class="text-muted small mb-1" style="font-size:12px;">Active</p>
-                        <h3 class="fw-normal mb-0" id="profile_stat_active">—</h3>
+                        <h3 class="fw-normal mb-0" id="stat_active">—</h3>
                     </div>
                 </div>
             </div>
             <div class="col-4">
                 <div class="card border-0 shadow-none" style="background:#fafafa; border: 0.5px solid #e9e9e9 !important;">
                     <div class="card-body p-3">
-                        <p class="text-muted small mb-1" style="font-size:12px;">Total</p>
-                        <h3 class="fw-normal mb-0" id="profile_stat_total">—</h3>
+                        <p class="text-muted small mb-1" style="font-size:12px;">Total Borrowed</p>
+                        <h3 class="fw-normal mb-0" id="stat_total">—</h3>
                     </div>
                 </div>
             </div>
@@ -102,7 +102,7 @@ $initials = substr($initials, 0, 2);
                 <div class="card border-0 shadow-none" style="background:#fafafa; border: 0.5px solid #e9e9e9 !important;">
                     <div class="card-body p-3">
                         <p class="text-muted small mb-1" style="font-size:12px;">Returned</p>
-                        <h3 class="fw-normal mb-0" id="profile_stat_returned">—</h3>
+                        <h3 class="fw-normal mb-0" id="stat_returned">—</h3>
                     </div>
                 </div>
             </div>
