@@ -291,6 +291,74 @@ class MyBrwngModel extends Model {
 
 
    //////////////////////////////////////////////////////////
-    
+    public function getAdminDashboardStats() {
+        // Total tools
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `tools` WHERE `status` = 1");
+        $total_tools = $q->getRowArray()['total'];
+
+        // Available tools
+        $q = $this->mybsdbmod->exec("SELECT SUM(`available`) AS total FROM `tools` WHERE `status` = 1");
+        $available_tools = $q->getRowArray()['total'] ?? 0;
+
+        // Active borrowings
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 1");
+        $active_borrowings = $q->getRowArray()['total'];
+
+        // Total students
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `users` WHERE `user_role` = 2 AND `status` = 1");
+        $total_students = $q->getRowArray()['total'];
+
+        // Overdue
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 3");
+        $overdue = $q->getRowArray()['total'];
+
+        // Returned today
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 2 AND `returned_at` = CURDATE()");
+        $returned_today = $q->getRowArray()['total'];
+
+        // Borrowed today
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `borrowed_at` = CURDATE()");
+        $borrowed_today = $q->getRowArray()['total'];
+
+        // Total borrowings
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings`");
+        $total_borrowings = $q->getRowArray()['total'];
+
+        // Recent borrowings (last 10)
+        $q = $this->mybsdbmod->exec("SELECT 
+                                        b.`brw_code`,
+                                        b.`tool_name`,
+                                        u.`full_name`,
+                                        u.`user_code`,
+                                        DATE_FORMAT(b.`borrowed_at`, '%b %d, %Y') AS borrowed_at,
+                                        DATE_FORMAT(b.`due_date`,    '%b %d, %Y') AS due_date,
+                                        CASE b.`status`
+                                            WHEN 1 THEN 'Active'
+                                            WHEN 2 THEN 'Returned'
+                                            WHEN 3 THEN 'Overdue'
+                                        END AS status
+                                    FROM `borrowings` b
+                                    LEFT JOIN `users` u ON b.`user_code` = u.`user_code`
+                                    ORDER BY b.`created_at` DESC
+                                    LIMIT 10");
+        $recent = $q->getResultArray();
+
+        // Inventory
+        $q = $this->mybsdbmod->exec("SELECT `tool_name`, `available`, `quantity` FROM `tools` WHERE `status` = 1 ORDER BY `tool_name` ASC");
+        $inventory = $q->getResultArray();
+
+        return [
+            'total_tools'       => $total_tools,
+            'available_tools'   => $available_tools,
+            'active_borrowings' => $active_borrowings,
+            'total_students'    => $total_students,
+            'overdue'           => $overdue,
+            'returned_today'    => $returned_today,
+            'borrowed_today'    => $borrowed_today,
+            'total_borrowings'  => $total_borrowings,
+            'recent'            => $recent,
+            'inventory'         => $inventory
+        ];
+    } 
 
 } // end MyBrwngModel
