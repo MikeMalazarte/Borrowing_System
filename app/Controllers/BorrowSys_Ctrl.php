@@ -110,8 +110,19 @@ class BorrowSys_Ctrl extends BaseController {
             break;
 
 
-        
+        case 'ADMIN-DASHBOARD':
+            $user_role = $session->get('user_role');
+            if ($user_role != 1) {
+                echo view('brwng_auth/login');
+                return;
+            }
+            $data['active_page'] = 'dashboard';
+            echo view('template/admin_header01', $data);
+            echo view('brwng_ad/ad_dashboard', $data);
+            echo view('template/admin_footer01');
+            break;
 
+        
 
 
 
