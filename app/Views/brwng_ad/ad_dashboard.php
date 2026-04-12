@@ -80,14 +80,19 @@ $full_name = session()->get('full_name');
 </div>
 
 <div class="row g-3">
-    <!-- Borrowing History -->
+    <!-- Recent Borrowings -->
     <div class="col-md-8">
         <div class="card border-0" style="border: 0.5px solid #e9e9e9 !important;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <p class="small fw-500 mb-0">Recent Borrowings</p>
+                    <p class="small fw-500 mb-0">Borrowings History</p>
                     <a href="<?= base_url('Borrowing-System?meaction=ADMIN-BORROWINGS') ?>"
                         class="small text-muted text-decoration-none">View all</a>
+                </div>
+                <!-- Search -->
+                <div class="mb-3">
+                    <input type="text" id="search_borrowings" class="form-control form-control-sm"
+                        placeholder="Search student or tool..." style="font-size:13px;">
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm" style="font-size: 13px;">
@@ -108,6 +113,11 @@ $full_name = session()->get('full_name');
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted" id="borrowings_info"></small>
+                    <div id="borrowings_pagination" class="d-flex gap-1"></div>
                 </div>
             </div>
         </div>

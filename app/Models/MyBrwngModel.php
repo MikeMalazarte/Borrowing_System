@@ -347,6 +347,46 @@ class MyBrwngModel extends Model {
         $q = $this->mybsdbmod->exec("SELECT `tool_name`, `available`, `quantity` FROM `tools` WHERE `status` = 1 ORDER BY `tool_name` ASC");
         $inventory = $q->getResultArray();
 
+        $page     = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+        $limit    = 8;
+        $offset   = ($page - 1) * $limit;
+        $term     = isset($_POST['term']) ? trim($_POST['term']) : '';
+        $strcon   = '';
+
+        if (!empty($term)) {
+            $strcon = "AND (b.`tool_name` LIKE '%{$term}%' 
+                        OR u.`full_name`  LIKE '%{$term}%' 
+                        OR u.`user_code`  LIKE '%{$term}%')";
+        }
+
+        // Total count for pagination
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total
+                                    FROM `borrowings` b
+                                    LEFT JOIN `users` u ON b.`user_code` = u.`user_code`
+                                    WHERE 1=1 {$strcon}");
+        $total_records = $q->getRowArray()['total'];
+        $total_pages   = ceil($total_records / $limit);
+
+        // Paginated results
+        $q = $this->mybsdbmod->exec("SELECT 
+                                        b.`brw_code`,
+                                        b.`tool_name`,
+                                        u.`full_name`,
+                                        u.`user_code`,
+                                        DATE_FORMAT(b.`borrowed_at`, '%b %d, %Y') AS borrowed_at,
+                                        DATE_FORMAT(b.`due_date`,    '%b %d, %Y') AS due_date,
+                                        CASE b.`status`
+                                            WHEN 1 THEN 'Active'
+                                            WHEN 2 THEN 'Returned'
+                                            WHEN 3 THEN 'Overdue'
+                                        END AS status
+                                    FROM `borrowings` b
+                                    LEFT JOIN `users` u ON b.`user_code` = u.`user_code`
+                                    WHERE 1=1 {$strcon}
+                                    ORDER BY b.`created_at` DESC
+                                    LIMIT {$limit} OFFSET {$offset}");
+        $recent = $q->getResultArray();
+
         return [
             'total_tools'       => $total_tools,
             'available_tools'   => $available_tools,
@@ -357,7 +397,11 @@ class MyBrwngModel extends Model {
             'borrowed_today'    => $borrowed_today,
             'total_borrowings'  => $total_borrowings,
             'recent'            => $recent,
-            'inventory'         => $inventory
+            'inventory'         => $inventory,
+            'recent'        => $recent,
+            'total_pages'   => (int)$total_pages,
+            'current_page'  => $page,
+            'total_records' => (int)$total_records,
         ];
     } 
 
