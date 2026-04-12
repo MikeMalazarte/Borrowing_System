@@ -122,7 +122,14 @@ class BorrowSys_Ctrl extends BaseController {
             echo view('template/admin_footer01');
             break;
 
-        
+        case 'GET-ADMIN-DASHBOARD-STATS':
+            $user_role = $session->get('user_role');
+            if ($user_role != 1) {
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized.']);
+                return;
+            }
+            echo json_encode($this->mybrmod->getAdminDashboardStats());
+            break;
 
 
 
