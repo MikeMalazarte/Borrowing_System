@@ -405,4 +405,108 @@ class MyBrwngModel extends Model {
         ];
     } 
 
+    public function getAdminTools() {
+    $page   = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+    $limit  = 10;
+    $offset = ($page - 1) * $limit;
+    $term   = isset($_POST['term']) ? trim($_POST['term']) : '';
+    $strcon = '';
+
+    if (!empty($term)) {
+        $strcon = "AND (`tool_name` LIKE '%{$term}%' OR `description` LIKE '%{$term}%')";
+    }
+
+    $q             = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `tools` WHERE `status` = 1 {$strcon}");
+    $total_records = $q->getRowArray()['total'];
+    $total_pages   = ceil($total_records / $limit);
+
+    $q     = $this->mybsdbmod->exec("SELECT * FROM `tools` 
+                                    WHERE `status` = 1 {$strcon}
+                                    ORDER BY `tool_name` ASC
+                                    LIMIT {$limit} OFFSET {$offset}");
+    $tools = $q->getResultArray();
+
+    return [
+        'tools'         => $tools,
+        'total_pages'   => (int)$total_pages,
+        'current_page'  => $page,
+        'total_records' => (int)$total_records
+    ];
+    }
+
+    public function addTool() {
+        $tool_name   = trim($this->mybsdbmod->request->getPost('tool_name'));
+        $description = trim($this->mybsdbmod->request->getPost('tool_description'));
+        $quantity    = (int)$this->mybsdbmod->request->getPost('tool_quantity');
+
+        if (empty($tool_name) || empty($quantity)) {
+            return ['status' => 'error', 'message' => 'Please fill in all fields.'];
+        }
+
+        if ($quantity < 1) {
+            return ['status' => 'error', 'message' => 'Quantity must be at least 1.'];
+        }
+
+        // Check duplicate
+        $q = $this->mybsdbmod->exec("SELECT `recid` FROM `tools` 
+                                    WHERE `tool_name` = '{$tool_name}' 
+                                    AND   `status`    = 1 
+                                    LIMIT 1");
+        if ($q->getNumRows() > 0) {
+            return ['status' => 'error', 'message' => 'Tool already exists.'];
+        }
+
+        // Generate tool code
+        $q         = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `tools`");
+        $row       = $q->getRowArray();
+        $tool_code = 'TOOL-' . str_pad($row['total'] + 1, 5, '0', STR_PAD_LEFT);
+
+        $this->mybsdbmod->exec("INSERT INTO `tools` 
+                                (`tool_code`, `tool_name`, `description`, `quantity`, `available`, `status`) 
+                                VALUES 
+                                ('{$tool_code}', '{$tool_name}', '{$description}', {$quantity}, {$quantity}, 1)");
+
+        return ['status' => 'ok'];
+    }
+
+    public function editTool() {
+        $tool_code   = trim($this->mybsdbmod->request->getPost('tool_code'));
+        $tool_name   = trim($this->mybsdbmod->request->getPost('tool_name'));
+        $description = trim($this->mybsdbmod->request->getPost('tool_description'));
+        $quantity    = (int)$this->mybsdbmod->request->getPost('tool_quantity');
+
+        if (empty($tool_code) || empty($tool_name) || empty($quantity)) {
+            return ['status' => 'error', 'message' => 'Please fill in all fields.'];
+        }
+
+        // Get current tool to compute new available
+        $q   = $this->mybsdbmod->exec("SELECT * FROM `tools` WHERE `tool_code` = '{$tool_code}' LIMIT 1");
+        $old = $q->getRowArray();
+
+        // borrowed = quantity - available
+        $borrowed      = $old['quantity'] - $old['available'];
+        $new_available = max(0, $quantity - $borrowed);
+
+        $this->mybsdbmod->exec("UPDATE `tools` 
+                                SET `tool_name`   = '{$tool_name}',
+                                    `description` = '{$description}',
+                                    `quantity`    = {$quantity},
+                                    `available`   = {$new_available}
+                                WHERE `tool_code` = '{$tool_code}'");
+
+        return ['status' => 'ok'];
+    }
+
+    public function archiveTool() {
+        $tool_code = trim($this->mybsdbmod->request->getPost('tool_code'));
+
+        if (empty($tool_code)) {
+            return ['status' => 'error', 'message' => 'Invalid request.'];
+        }
+
+        $this->mybsdbmod->exec("UPDATE `tools` SET `status` = 0 WHERE `tool_code` = '{$tool_code}'");
+
+        return ['status' => 'ok'];
+    }
+
 } // end MyBrwngModel
