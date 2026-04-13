@@ -131,6 +131,38 @@ class BorrowSys_Ctrl extends BaseController {
             echo json_encode($this->mybrmod->getAdminDashboardStats());
             break;
 
+        case 'ADMIN-TOOLS':
+            $user_role = $session->get('user_role');
+            if ($user_role != 1) {
+                echo view('brwng_auth/login');
+                return;
+            }
+            $data['active_page'] = 'tools';
+            echo view('template/admin_header01', $data);
+            echo view('brwng_ad/ad_tools', $data);
+            echo view('template/admin_footer01');
+            break;
+
+        case 'GET-ADMIN-TOOLS':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->getAdminTools());
+            break;
+
+        case 'DO-ADD-TOOL':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->addTool());
+            break;
+
+        case 'DO-EDIT-TOOL':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->editTool());
+            break;
+
+        case 'DO-ARCHIVE-TOOL':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->archiveTool());
+            break;
+
 
 
 

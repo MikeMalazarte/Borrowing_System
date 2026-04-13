@@ -156,6 +156,241 @@ var AdBrwngSys = function () {
         });
     };
 
+    this.loadAdminTools = function () {
+        var self        = this;
+        var currentPage = 1;
+        var searchTerm  = '';
+
+        function fetchTools() {
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : {
+                    meaction : 'GET-ADMIN-TOOLS',
+                    page     : currentPage,
+                    term     : searchTerm
+                },
+                dataType : 'json',
+                success  : function (res) {
+                    var rows = '';
+                    if (res.tools.length === 0) {
+                        rows = '<tr><td colspan="7" class="text-center text-muted py-3"><small>No tools found.</small></td></tr>';
+                    } else {
+                        $.each(res.tools, function (i, t) {
+                            var statusBadge = '<span class="badge rounded-pill" style="background:#f0faf0; color:#3a7d44; border: 0.5px solid #c3e6cb; font-weight:400;">Active</span>';
+                            var availBadge  = parseInt(t.available) > 0
+                                ? '<span style="color:#3a7d44;">' + t.available + '</span>'
+                                : '<span style="color:#c0392b;">' + t.available + '</span>';
+
+                            rows += '<tr>' +
+                                '<td class="text-muted">' + t.tool_code + '</td>' +
+                                '<td>' + t.tool_name + '</td>' +
+                                '<td class="text-muted">' + (t.description || '—') + '</td>' +
+                                '<td>' + t.quantity + '</td>' +
+                                '<td>' + availBadge + '</td>' +
+                                '<td>' + statusBadge + '</td>' +
+                                '<td>' +
+                                    '<button class="btn btn-sm btn-outline-secondary me-1 btnEditTool" style="font-size:12px;" ' +
+                                        'data-tool_code="' + t.tool_code + '" ' +
+                                        'data-tool_name="' + t.tool_name + '" ' +
+                                        'data-tool_description="' + (t.description || '') + '" ' +
+                                        'data-tool_quantity="' + t.quantity + '">Edit</button>' +
+                                    '<button class="btn btn-sm btn-outline-secondary btnArchiveTool" style="font-size:12px; color:#c0392b;" ' +
+                                        'data-tool_code="' + t.tool_code + '" ' +
+                                        'data-tool_name="' + t.tool_name + '">Archive</button>' +
+                                '</td>' +
+                            '</tr>';
+                        });
+                    }
+                    $('#admin_tools_list').html(rows);
+
+                    // Info
+                    var from = res.total_records === 0 ? 0 : ((currentPage - 1) * 10) + 1;
+                    var to   = Math.min(currentPage * 10, res.total_records);
+                    $('#tools_info').text('Showing ' + from + '–' + to + ' of ' + res.total_records);
+
+                    // Pagination
+                    var pages = '';
+                    if (res.total_pages > 1) {
+                        pages += '<button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:12px;" id="btn_tools_prev" '
+                            + (currentPage === 1 ? 'disabled' : '') + '>&#8249;</button>';
+                        for (var p = 1; p <= res.total_pages; p++) {
+                            var active = p === currentPage ? 'btn-dark' : 'btn-outline-secondary';
+                            pages += '<button class="btn btn-sm ' + active + ' py-0 px-2 btn_tools_page" style="font-size:12px;" data-page="' + p + '">' + p + '</button>';
+                        }
+                        pages += '<button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:12px;" id="btn_tools_next" '
+                            + (currentPage === res.total_pages ? 'disabled' : '') + '>&#8250;</button>';
+                    }
+                    $('#tools_pagination').html(pages);
+                },
+                error : function () {
+                    console.error('Failed to load tools.');
+                }
+            });
+        }
+
+        // Initial load
+        fetchTools();
+
+        // Search — debounced
+        var searchTimer;
+        $(document).on('keyup', '#search_tools_admin', function () {
+            clearTimeout(searchTimer);
+            var term = $.trim($(this).val());
+            searchTimer = setTimeout(function () {
+                searchTerm  = term;
+                currentPage = 1;
+                fetchTools();
+            }, 400);
+        });
+
+        // Pagination
+        $(document).on('click', '.btn_tools_page', function () {
+            currentPage = parseInt($(this).data('page'));
+            fetchTools();
+        });
+        $(document).on('click', '#btn_tools_prev', function () {
+            if (currentPage > 1) { currentPage--; fetchTools(); }
+        });
+        $(document).on('click', '#btn_tools_next', function () {
+            currentPage++; fetchTools();
+        });
+
+        // Open Add Modal
+        $(document).on('click', '#btnOpenAddTool', function () {
+            $('#add_tool_name').val('');
+            $('#add_tool_description').val('');
+            $('#add_tool_quantity').val('');
+            $('#add_tool_msg').html('');
+            var modal = new bootstrap.Modal(document.getElementById('modalAddTool'));
+            modal.show();
+        });
+
+        // Confirm Add
+        $(document).on('click', '#btnConfirmAddTool', function () {
+            var tool_name    = $.trim($('#add_tool_name').val());
+            var description  = $.trim($('#add_tool_description').val());
+            var quantity     = $.trim($('#add_tool_quantity').val());
+
+            if (tool_name === '' || quantity === '') {
+                $('#add_tool_msg').html('<div class="alert alert-danger py-2 small">Please fill in all required fields.</div>');
+                return false;
+            }
+
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : {
+                    meaction         : 'DO-ADD-TOOL',
+                    tool_name        : tool_name,
+                    tool_description : description,
+                    tool_quantity    : quantity
+                },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        $('#add_tool_msg').html('<div class="alert alert-success py-2 small">Tool added successfully!</div>');
+                        setTimeout(function () {
+                            bootstrap.Modal.getInstance(document.getElementById('modalAddTool')).hide();
+                            fetchTools();
+                        }, 1500);
+                    } else {
+                        $('#add_tool_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                    }
+                },
+                error : function () {
+                    $('#add_tool_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+                }
+            });
+        });
+
+        // Open Edit Modal
+        $(document).on('click', '.btnEditTool', function () {
+            $('#edit_tool_code').val($(this).data('tool_code'));
+            $('#edit_tool_name').val($(this).data('tool_name'));
+            $('#edit_tool_description').val($(this).data('tool_description'));
+            $('#edit_tool_quantity').val($(this).data('tool_quantity'));
+            $('#edit_tool_msg').html('');
+            var modal = new bootstrap.Modal(document.getElementById('modalEditTool'));
+            modal.show();
+        });
+
+        // Confirm Edit
+        $(document).on('click', '#btnConfirmEditTool', function () {
+            var tool_code   = $('#edit_tool_code').val();
+            var tool_name   = $.trim($('#edit_tool_name').val());
+            var description = $.trim($('#edit_tool_description').val());
+            var quantity    = $.trim($('#edit_tool_quantity').val());
+
+            if (tool_name === '' || quantity === '') {
+                $('#edit_tool_msg').html('<div class="alert alert-danger py-2 small">Please fill in all required fields.</div>');
+                return false;
+            }
+
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : {
+                    meaction         : 'DO-EDIT-TOOL',
+                    tool_code        : tool_code,
+                    tool_name        : tool_name,
+                    tool_description : description,
+                    tool_quantity    : quantity
+                },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        $('#edit_tool_msg').html('<div class="alert alert-success py-2 small">Tool updated successfully!</div>');
+                        setTimeout(function () {
+                            bootstrap.Modal.getInstance(document.getElementById('modalEditTool')).hide();
+                            fetchTools();
+                        }, 1500);
+                    } else {
+                        $('#edit_tool_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                    }
+                },
+                error : function () {
+                    $('#edit_tool_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+                }
+            });
+        });
+
+        // Open Archive Modal
+        $(document).on('click', '.btnArchiveTool', function () {
+            $('#archive_tool_code').val($(this).data('tool_code'));
+            $('#archive_tool_name').text($(this).data('tool_name'));
+            $('#archive_tool_msg').html('');
+            var modal = new bootstrap.Modal(document.getElementById('modalArchiveTool'));
+            modal.show();
+        });
+
+        // Confirm Archive
+        $(document).on('click', '#btnConfirmArchiveTool', function () {
+            var tool_code = $('#archive_tool_code').val();
+
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : { meaction : 'DO-ARCHIVE-TOOL', tool_code : tool_code },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        $('#archive_tool_msg').html('<div class="alert alert-success py-2 small">Tool archived successfully!</div>');
+                        setTimeout(function () {
+                            bootstrap.Modal.getInstance(document.getElementById('modalArchiveTool')).hide();
+                            fetchTools();
+                        }, 1500);
+                    } else {
+                        $('#archive_tool_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                    }
+                },
+                error : function () {
+                    $('#archive_tool_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+                }
+            });
+        });
+    };
+
 };
 
 // Initialize on DOM ready
@@ -163,5 +398,6 @@ $(document).ready(function () {
     var me = new AdBrwngSys();
     me.doLogout();
 
-    if ($('#stat_total_tools').length > 0) { me.loadAdminDashboard(); }
+    if ($('#stat_total_tools').length > 0)  { me.loadAdminDashboard(); }
+    if ($('#admin_tools_list').length > 0)  { me.loadAdminTools(); }
 });

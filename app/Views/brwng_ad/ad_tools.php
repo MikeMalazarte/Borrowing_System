@@ -4,12 +4,14 @@
 <p class="text-muted small mb-4">Manage your tool inventory.</p>
 
 <!-- Actions Bar -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <input type="text" id="search_tools_admin" class="form-control form-control-sm w-auto"
-        placeholder="Search tools..." style="font-size:13px; min-width:220px;">
-    <button class="btn btn-sm btn-dark" id="btnOpenAddTool" style="font-size:13px;">
+ <div>
+    <button class="btn btn-sm btn-dark mb-3" id="btnOpenAddTool" style="font-size:13px;">
         + Add Tool
     </button>
+ </div>
+<div class="d-flex align-items-center mb-3">
+    <input type="text" id="search_tools_admin" class="form-control form-control-sm w-auto"
+        placeholder="Search tools..." style="font-size:13px; min-width:220px;">
 </div>
 
 <!-- Tools Table -->
