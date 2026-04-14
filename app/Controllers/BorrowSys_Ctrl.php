@@ -163,6 +163,28 @@ class BorrowSys_Ctrl extends BaseController {
             echo json_encode($this->mybrmod->archiveTool());
             break;
 
+        case 'ADMIN-BORROWINGS':
+            $user_role = $session->get('user_role');
+            if ($user_role != 1) {
+                echo view('brwng_auth/login');
+                return;
+            }
+            $data['active_page'] = 'borrowings';
+            echo view('template/admin_header01', $data);
+            echo view('brwng_ad/ad_borrowings', $data);
+            echo view('template/admin_footer01');
+            break;
+
+        case 'GET-ADMIN-BORROWINGS':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->getAdminBorrowings());
+            break;
+
+        case 'DO-ADMIN-RETURN':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->adminReturnTool());
+            break;
+
 
 
 
