@@ -572,47 +572,91 @@ class MyBrwngModel extends Model {
                                 WHERE 1=1 {$strcon}
                                 ORDER BY b.`created_at` DESC
                                 LIMIT {$limit} OFFSET {$offset}");
-    $borrowings = $q->getResultArray();
+        $borrowings = $q->getResultArray();
 
-    return [
-        'borrowings'    => $borrowings,
-        'total_pages'   => (int)$total_pages,
-        'current_page'  => $page,
-        'total_records' => (int)$total_records,
-        'cnt_all'       => (int)$cnt_all,
-        'cnt_active'    => (int)$cnt_active,
-        'cnt_returned'  => (int)$cnt_returned,
-        'cnt_overdue'   => (int)$cnt_overdue
-    ];
-}
-
-public function adminReturnTool() {
-    $brw_code = trim($this->mybsdbmod->request->getPost('brw_code'));
-
-    if (empty($brw_code)) {
-        return ['status' => 'error', 'message' => 'Invalid request.'];
+        return [
+            'borrowings'    => $borrowings,
+            'total_pages'   => (int)$total_pages,
+            'current_page'  => $page,
+            'total_records' => (int)$total_records,
+            'cnt_all'       => (int)$cnt_all,
+            'cnt_active'    => (int)$cnt_active,
+            'cnt_returned'  => (int)$cnt_returned,
+            'cnt_overdue'   => (int)$cnt_overdue
+        ];
     }
 
-    $q = $this->mybsdbmod->exec("SELECT * FROM `borrowings` 
-                                WHERE `brw_code` = '{$brw_code}' 
-                                AND   `status`   IN (1, 3)
-                                LIMIT 1");
-    if ($q->getNumRows() == 0) {
-        return ['status' => 'error', 'message' => 'Borrowing record not found.'];
+    public function adminReturnTool() {
+        $brw_code = trim($this->mybsdbmod->request->getPost('brw_code'));
+
+        if (empty($brw_code)) {
+            return ['status' => 'error', 'message' => 'Invalid request.'];
+        }
+
+        $q = $this->mybsdbmod->exec("SELECT * FROM `borrowings` 
+                                    WHERE `brw_code` = '{$brw_code}' 
+                                    AND   `status`   IN (1, 3)
+                                    LIMIT 1");
+        if ($q->getNumRows() == 0) {
+            return ['status' => 'error', 'message' => 'Borrowing record not found.'];
+        }
+
+        $borrowing = $q->getRowArray();
+
+        $this->mybsdbmod->exec("UPDATE `borrowings` 
+                                SET    `status`      = 2,
+                                    `returned_at` = CURDATE()
+                                WHERE  `brw_code`    = '{$brw_code}'");
+
+        $this->mybsdbmod->exec("UPDATE `tools` 
+                                SET    `available` = `available` + 1 
+                                WHERE  `tool_code` = '{$borrowing['tool_code']}'");
+
+        return ['status' => 'ok'];
     }
 
-    $borrowing = $q->getRowArray();
+    public function exportBorrowingsCSV() {
+        $q    = $this->mybsdbmod->exec("SELECT 
+                                            b.`brw_code`,
+                                            u.`full_name`,
+                                            u.`user_code`,
+                                            b.`tool_name`,
+                                            DATE_FORMAT(b.`borrowed_at`, '%b %d, %Y') AS borrowed_at,
+                                            DATE_FORMAT(b.`time_from`,   '%h:%i %p')  AS time_from,
+                                            DATE_FORMAT(b.`time_to`,     '%h:%i %p')  AS time_to,
+                                            DATE_FORMAT(b.`due_date`,    '%b %d, %Y') AS due_date,
+                                            DATE_FORMAT(b.`returned_at`, '%b %d, %Y') AS returned_at,
+                                            CASE b.`status`
+                                                WHEN 1 THEN 'Active'
+                                                WHEN 2 THEN 'Returned'
+                                                WHEN 3 THEN 'Overdue'
+                                            END AS status
+                                        FROM `borrowings` b
+                                        LEFT JOIN `users` u ON b.`user_code` = u.`user_code`
+                                        ORDER BY b.`created_at` DESC");
+        $rows = $q->getResultArray();
 
-    $this->mybsdbmod->exec("UPDATE `borrowings` 
-                            SET    `status`      = 2,
-                                   `returned_at` = CURDATE()
-                            WHERE  `brw_code`    = '{$brw_code}'");
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="borrowings_' . date('Ymd') . '.csv"');
 
-    $this->mybsdbmod->exec("UPDATE `tools` 
-                            SET    `available` = `available` + 1 
-                            WHERE  `tool_code` = '{$borrowing['tool_code']}'");
-
-    return ['status' => 'ok'];
-}
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['Brw Code', 'Student', 'Student ID', 'Tool', 'Borrowed', 'Time From', 'Time To', 'Due Date', 'Returned', 'Status']);
+        foreach ($rows as $row) {
+            fputcsv($out, [
+                $row['brw_code'],
+                $row['full_name'],
+                $row['user_code'],
+                $row['tool_name'],
+                $row['borrowed_at'],
+                $row['time_from'],
+                $row['time_to'],
+                $row['due_date'],
+                $row['returned_at'] ?? '—',
+                $row['status']
+            ]);
+        }
+        fclose($out);
+        exit;
+    }
 
 } // end MyBrwngModel

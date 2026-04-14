@@ -185,6 +185,13 @@ class BorrowSys_Ctrl extends BaseController {
             echo json_encode($this->mybrmod->adminReturnTool());
             break;
 
+        case 'EXPORT-BORROWINGS-CSV':
+            if ($session->get('user_role') != 1) {
+                echo view('brwng_auth/login');
+                return;
+            }
+            $this->mybrmod->exportBorrowingsCSV();
+            break;
 
 
 

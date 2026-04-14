@@ -391,6 +391,198 @@ var AdBrwngSys = function () {
         });
     };
 
+    this.loadAdminBorrowings = function () {
+        var self        = this;
+        var currentPage = 1;
+        var searchTerm  = '';
+        var statusFilter = 'all';
+
+    function fetchBorrowings() {
+        $.ajax({
+            type     : 'POST',
+            url      : mesiteurl + 'Borrowing-System',
+            data     : {
+                meaction : 'GET-ADMIN-BORROWINGS',
+                page     : currentPage,
+                term     : searchTerm,
+                status   : statusFilter
+            },
+            dataType : 'json',
+            success  : function (res) {
+
+                // Update chip counts
+                $('#chip_all').text('(' + res.cnt_all + ')');
+                $('#chip_active').text('(' + res.cnt_active + ')');
+                $('#chip_overdue').text('(' + res.cnt_overdue + ')');
+                $('#chip_returned').text('(' + res.cnt_returned + ')');
+
+                // Table rows
+                var rows = '';
+                if (res.borrowings.length === 0) {
+                    rows = '<tr><td colspan="8" class="text-center text-muted py-3"><small>No borrowings found.</small></td></tr>';
+                } else {
+                    $.each(res.borrowings, function (i, r) {
+                        var badge = '';
+                        var rowStyle = '';
+                        if (r.status_label === 'Active') {
+                            badge    = '<span class="badge rounded-pill" style="background:#f3f3f3; color:#555; border: 0.5px solid #e9e9e9; font-weight:400;">Active</span>';
+                        }
+                        if (r.status_label === 'Returned') {
+                            badge    = '<span class="badge rounded-pill" style="background:#f3f3f3; color:#555; border: 0.5px solid #e9e9e9; font-weight:400;">Returned</span>';
+                        }
+                        if (r.status_label === 'Overdue') {
+                            badge    = '<span class="badge rounded-pill" style="background:#fff0f0; color:#c0392b; border: 0.5px solid #f5c6c6; font-weight:400;">Overdue</span>';
+                            rowStyle = 'background:#fff8f8;';
+                        }
+
+                        var actionBtn = '';
+                        if (r.status_label === 'Active' || r.status_label === 'Overdue') {
+                            actionBtn = '<button class="btn btn-sm btn-outline-secondary me-1 btnAdminReturn" style="font-size:12px;" ' +
+                                'data-brw_code="'  + r.brw_code  + '" ' +
+                                'data-tool_name="' + r.tool_name + '">Return</button>';
+                        }
+                        actionBtn += '<button class="btn btn-sm btn-outline-secondary btnViewBorrowing" style="font-size:12px;" ' +
+                            'data-brw_code="'    + r.brw_code    + '" ' +
+                            'data-full_name="'   + r.full_name   + '" ' +
+                            'data-user_code="'   + r.user_code   + '" ' +
+                            'data-tool_name="'   + r.tool_name   + '" ' +
+                            'data-borrowed_at="' + r.borrowed_at + '" ' +
+                            'data-time_from="'   + r.time_from   + '" ' +
+                            'data-time_to="'     + r.time_to     + '" ' +
+                            'data-due_date="'    + r.due_date    + '" ' +
+                            'data-returned_at="' + (r.returned_at || '—') + '" ' +
+                            'data-status="'      + r.status_label + '">View</button>';
+
+                        rows += '<tr style="' + rowStyle + '">' +
+                            '<td class="text-muted">' + r.brw_code + '</td>' +
+                            '<td>' + r.full_name + '<br><small class="text-muted">' + r.user_code + '</small></td>' +
+                            '<td>' + r.tool_name + '</td>' +
+                            '<td>' + r.borrowed_at + '</td>' +
+                            '<td class="text-muted">' + r.time_from + ' – ' + r.time_to + '</td>' +
+                            '<td>' + r.due_date + '</td>' +
+                            '<td>' + badge + '</td>' +
+                            '<td>' + actionBtn + '</td>' +
+                        '</tr>';
+                    });
+                }
+                $('#admin_borrowings_list').html(rows);
+
+                // Info
+                var from = res.total_records === 0 ? 0 : ((currentPage - 1) * 10) + 1;
+                var to   = Math.min(currentPage * 10, res.total_records);
+                $('#borrowings_tab_info').text('Showing ' + from + '–' + to + ' of ' + res.total_records);
+
+                // Pagination
+                var pages = '';
+                if (res.total_pages > 1) {
+                    pages += '<button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:12px;" id="btn_brw_prev" '
+                        + (currentPage === 1 ? 'disabled' : '') + '>&#8249;</button>';
+                    for (var p = 1; p <= res.total_pages; p++) {
+                        var active = p === currentPage ? 'btn-dark' : 'btn-outline-secondary';
+                        pages += '<button class="btn btn-sm ' + active + ' py-0 px-2 btn_brw_page" style="font-size:12px;" data-page="' + p + '">' + p + '</button>';
+                    }
+                    pages += '<button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:12px;" id="btn_brw_next" '
+                        + (currentPage === res.total_pages ? 'disabled' : '') + '>&#8250;</button>';
+                }
+                $('#borrowings_tab_pagination').html(pages);
+            },
+            error : function () {
+                console.error('Failed to load borrowings.');
+            }
+        });
+    }
+
+    // Initial load
+    fetchBorrowings();
+
+    // Filter chips
+    $(document).on('click', '.filter_chip', function () {
+        $('.filter_chip').removeClass('btn-dark').addClass('btn-outline-secondary');
+        $(this).removeClass('btn-outline-secondary').addClass('btn-dark');
+        statusFilter = $(this).data('status');
+        currentPage  = 1;
+        fetchBorrowings();
+    });
+
+    // Search — debounced
+    var searchTimer;
+    $(document).on('keyup', '#search_borrowings_admin', function () {
+        clearTimeout(searchTimer);
+        var term = $.trim($(this).val());
+        searchTimer = setTimeout(function () {
+            searchTerm  = term;
+            currentPage = 1;
+            fetchBorrowings();
+        }, 400);
+    });
+
+    // Pagination
+    $(document).on('click', '.btn_brw_page', function () {
+        currentPage = parseInt($(this).data('page'));
+        fetchBorrowings();
+    });
+    $(document).on('click', '#btn_brw_prev', function () {
+        if (currentPage > 1) { currentPage--; fetchBorrowings(); }
+    });
+    $(document).on('click', '#btn_brw_next', function () {
+        currentPage++; fetchBorrowings();
+    });
+
+    // View Details Modal
+    $(document).on('click', '.btnViewBorrowing', function () {
+        $('#view_brw_code').text($(this).data('brw_code'));
+        $('#view_full_name').text($(this).data('full_name'));
+        $('#view_user_code').text($(this).data('user_code'));
+        $('#view_tool_name').text($(this).data('tool_name'));
+        $('#view_borrowed_at').text($(this).data('borrowed_at'));
+        $('#view_time_period').text($(this).data('time_from') + ' – ' + $(this).data('time_to'));
+        $('#view_due_date').text($(this).data('due_date'));
+        $('#view_returned_at').text($(this).data('returned_at'));
+        $('#view_status').text($(this).data('status'));
+        var modal = new bootstrap.Modal(document.getElementById('modalViewBorrowing'));
+        modal.show();
+    });
+
+    // Mark as Returned Modal
+    $(document).on('click', '.btnAdminReturn', function () {
+        $('#admin_return_brw_code').val($(this).data('brw_code'));
+        $('#admin_return_tool_name').text($(this).data('tool_name'));
+        $('#admin_return_msg').html('');
+        var modal = new bootstrap.Modal(document.getElementById('modalAdminReturn'));
+        modal.show();
+    });
+
+    // Confirm Return
+    $(document).on('click', '#btnConfirmAdminReturn', function () {
+        var brw_code = $('#admin_return_brw_code').val();
+        $.ajax({
+            type     : 'POST',
+            url      : mesiteurl + 'Borrowing-System',
+            data     : { meaction : 'DO-ADMIN-RETURN', brw_code : brw_code },
+            dataType : 'json',
+            success  : function (data) {
+                if (data.status === 'ok') {
+                    $('#admin_return_msg').html('<div class="alert alert-success py-2 small">Marked as returned successfully!</div>');
+                    setTimeout(function () {
+                        bootstrap.Modal.getInstance(document.getElementById('modalAdminReturn')).hide();
+                        fetchBorrowings();
+                    }, 1500);
+                } else {
+                    $('#admin_return_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                }
+            },
+            error : function () {
+                $('#admin_return_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+            }
+        });
+    });
+
+    // Export CSV
+    $(document).on('click', '#btnExportCSV', function () {
+        window.location.href = mesiteurl + 'Borrowing-System?meaction=EXPORT-BORROWINGS-CSV';
+    });
+    };
+
 };
 
 // Initialize on DOM ready
@@ -398,6 +590,7 @@ $(document).ready(function () {
     var me = new AdBrwngSys();
     me.doLogout();
 
-    if ($('#stat_total_tools').length > 0)  { me.loadAdminDashboard(); }
-    if ($('#admin_tools_list').length > 0)  { me.loadAdminTools(); }
+    if ($('#stat_total_tools').length > 0)       { me.loadAdminDashboard(); }
+    if ($('#admin_tools_list').length > 0)        { me.loadAdminTools(); }
+    if ($('#admin_borrowings_list').length > 0)   { me.loadAdminBorrowings(); }
 });
