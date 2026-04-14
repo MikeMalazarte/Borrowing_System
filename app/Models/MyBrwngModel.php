@@ -509,4 +509,110 @@ class MyBrwngModel extends Model {
         return ['status' => 'ok'];
     }
 
+    public function getAdminBorrowings() {
+    $page      = isset($_POST['page'])   ? (int)$_POST['page']        : 1;
+    $limit     = 10;
+    $offset    = ($page - 1) * $limit;
+    $term      = isset($_POST['term'])   ? trim($_POST['term'])        : '';
+    $status    = isset($_POST['status']) ? trim($_POST['status'])      : 'all';
+    $strcon    = '';
+
+    if (!empty($term)) {
+        $strcon .= " AND (b.`tool_name`  LIKE '%{$term}%' 
+                      OR  u.`full_name`  LIKE '%{$term}%' 
+                      OR  u.`user_code`  LIKE '%{$term}%'
+                      OR  b.`brw_code`   LIKE '%{$term}%')";
+    }
+
+    if ($status !== 'all') {
+        $strcon .= " AND b.`status` = {$status}";
+    }
+
+    // Counts for chips
+    $q        = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings`");
+    $cnt_all  = $q->getRowArray()['total'];
+
+    $q        = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 1");
+    $cnt_active = $q->getRowArray()['total'];
+
+    $q        = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 2");
+    $cnt_returned = $q->getRowArray()['total'];
+
+    $q        = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 3");
+    $cnt_overdue = $q->getRowArray()['total'];
+
+    // Total for pagination
+    $q             = $this->mybsdbmod->exec("SELECT COUNT(*) AS total 
+                                            FROM `borrowings` b
+                                            LEFT JOIN `users` u ON b.`user_code` = u.`user_code`
+                                            WHERE 1=1 {$strcon}");
+    $total_records = $q->getRowArray()['total'];
+    $total_pages   = ceil($total_records / $limit);
+
+    // Results
+    $q = $this->mybsdbmod->exec("SELECT 
+                                    b.`brw_code`,
+                                    b.`tool_name`,
+                                    b.`tool_code`,
+                                    u.`full_name`,
+                                    u.`user_code`,
+                                    DATE_FORMAT(b.`borrowed_at`,  '%b %d, %Y') AS borrowed_at,
+                                    DATE_FORMAT(b.`due_date`,     '%b %d, %Y') AS due_date,
+                                    DATE_FORMAT(b.`returned_at`,  '%b %d, %Y') AS returned_at,
+                                    DATE_FORMAT(b.`time_from`,    '%h:%i %p')  AS time_from,
+                                    DATE_FORMAT(b.`time_to`,      '%h:%i %p')  AS time_to,
+                                    b.`status`,
+                                    CASE b.`status`
+                                        WHEN 1 THEN 'Active'
+                                        WHEN 2 THEN 'Returned'
+                                        WHEN 3 THEN 'Overdue'
+                                    END AS status_label
+                                FROM `borrowings` b
+                                LEFT JOIN `users` u ON b.`user_code` = u.`user_code`
+                                WHERE 1=1 {$strcon}
+                                ORDER BY b.`created_at` DESC
+                                LIMIT {$limit} OFFSET {$offset}");
+    $borrowings = $q->getResultArray();
+
+    return [
+        'borrowings'    => $borrowings,
+        'total_pages'   => (int)$total_pages,
+        'current_page'  => $page,
+        'total_records' => (int)$total_records,
+        'cnt_all'       => (int)$cnt_all,
+        'cnt_active'    => (int)$cnt_active,
+        'cnt_returned'  => (int)$cnt_returned,
+        'cnt_overdue'   => (int)$cnt_overdue
+    ];
+}
+
+public function adminReturnTool() {
+    $brw_code = trim($this->mybsdbmod->request->getPost('brw_code'));
+
+    if (empty($brw_code)) {
+        return ['status' => 'error', 'message' => 'Invalid request.'];
+    }
+
+    $q = $this->mybsdbmod->exec("SELECT * FROM `borrowings` 
+                                WHERE `brw_code` = '{$brw_code}' 
+                                AND   `status`   IN (1, 3)
+                                LIMIT 1");
+    if ($q->getNumRows() == 0) {
+        return ['status' => 'error', 'message' => 'Borrowing record not found.'];
+    }
+
+    $borrowing = $q->getRowArray();
+
+    $this->mybsdbmod->exec("UPDATE `borrowings` 
+                            SET    `status`      = 2,
+                                   `returned_at` = CURDATE()
+                            WHERE  `brw_code`    = '{$brw_code}'");
+
+    $this->mybsdbmod->exec("UPDATE `tools` 
+                            SET    `available` = `available` + 1 
+                            WHERE  `tool_code` = '{$borrowing['tool_code']}'");
+
+    return ['status' => 'ok'];
+}
+
 } // end MyBrwngModel
