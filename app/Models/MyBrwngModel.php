@@ -659,4 +659,130 @@ class MyBrwngModel extends Model {
         exit;
     }
 
+    public function getAdminStudents() {
+        $page    = isset($_POST['page'])   ? (int)$_POST['page']   : 1;
+        $limit   = 10;
+        $offset  = ($page - 1) * $limit;
+        $term    = isset($_POST['term'])   ? trim($_POST['term'])   : '';
+        $status  = isset($_POST['status']) ? trim($_POST['status']) : 'all';
+        $strcon  = "AND u.`user_role` = 2";
+
+        if (!empty($term)) {
+            $strcon .= " AND (u.`full_name` LIKE '%{$term}%' 
+                        OR  u.`user_code` LIKE '%{$term}%' 
+                        OR  u.`email`     LIKE '%{$term}%')";
+        }
+
+        if ($status !== 'all') {
+            $strcon .= " AND u.`status` = {$status}";
+        }
+
+        // Chip counts
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `users` WHERE `user_role` = 2");
+        $cnt_all = $q->getRowArray()['total'];
+
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `users` WHERE `user_role` = 2 AND `status` = 1");
+        $cnt_active = $q->getRowArray()['total'];
+
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `users` WHERE `user_role` = 2 AND `status` = 0");
+        $cnt_suspended = $q->getRowArray()['total'];
+
+        // Total for pagination
+        $q             = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `users` u WHERE 1=1 {$strcon}");
+        $total_records = $q->getRowArray()['total'];
+        $total_pages   = ceil($total_records / $limit);
+
+        // Students with borrowing stats
+        $q = $this->mybsdbmod->exec("SELECT 
+                                        u.`user_code`,
+                                        u.`full_name`,
+                                        u.`email`,
+                                        u.`course`,
+                                        u.`year_level`,
+                                        u.`status`,
+                                        COUNT(b.`brw_code`)                          AS total_borrowed,
+                                        SUM(CASE WHEN b.`status` IN (2,3) 
+                                                AND b.`returned_at` > b.`due_date` 
+                                                THEN 1 ELSE 0 END)                  AS total_overdue,
+                                        SUM(CASE WHEN b.`status` = 1 THEN 1 ELSE 0 END) AS active_now
+                                    FROM `users` u
+                                    LEFT JOIN `borrowings` b ON u.`user_code` = b.`user_code`
+                                    WHERE 1=1 {$strcon}
+                                    GROUP BY u.`user_code`
+                                    ORDER BY u.`full_name` ASC
+                                    LIMIT {$limit} OFFSET {$offset}");
+        $students = $q->getResultArray();
+
+        return [
+            'students'      => $students,
+            'total_pages'   => (int)$total_pages,
+            'current_page'  => $page,
+            'total_records' => (int)$total_records,
+            'cnt_all'       => (int)$cnt_all,
+            'cnt_active'    => (int)$cnt_active,
+            'cnt_suspended' => (int)$cnt_suspended
+        ];
+    }
+
+    public function getStudentDetail() {
+        $user_code = trim($this->mybsdbmod->request->getPost('user_code'));
+
+        // Borrowing stats
+        $q = $this->mybsdbmod->exec("SELECT 
+                                        COUNT(*)                                         AS total_borrowed,
+                                        SUM(CASE WHEN `status` IN (2,3) 
+                                                AND `returned_at` > `due_date` 
+                                                THEN 1 ELSE 0 END)                      AS total_overdue,
+                                        SUM(CASE WHEN `status` = 1 THEN 1 ELSE 0 END)   AS active_now,
+                                        SUM(CASE WHEN `status` = 2 
+                                                AND `returned_at` <= `due_date` 
+                                                THEN 1 ELSE 0 END)                      AS on_time
+                                    FROM `borrowings`
+                                    WHERE `user_code` = '{$user_code}'");
+        $stats = $q->getRowArray();
+
+        // Borrowing history (last 10)
+        $q = $this->mybsdbmod->exec("SELECT 
+                                        `tool_name`,
+                                        DATE_FORMAT(`borrowed_at`,  '%b %d, %Y') AS borrowed_at,
+                                        DATE_FORMAT(`due_date`,     '%b %d, %Y') AS due_date,
+                                        DATE_FORMAT(`returned_at`,  '%b %d, %Y') AS returned_at,
+                                        CASE `status`
+                                            WHEN 1 THEN 'Active'
+                                            WHEN 2 THEN 'Returned'
+                                            WHEN 3 THEN 'Overdue'
+                                        END AS status_label,
+                                        CASE 
+                                            WHEN `status` = 2 AND `returned_at` <= `due_date` THEN 1
+                                            ELSE 0
+                                        END AS on_time
+                                    FROM `borrowings`
+                                    WHERE `user_code` = '{$user_code}'
+                                    ORDER BY `created_at` DESC
+                                    LIMIT 10");
+        $history = $q->getResultArray();
+
+        return [
+            'status'   => 'ok',
+            'stats'    => $stats,
+            'history'  => $history
+        ];
+    }
+
+    public function toggleStudentStatus() {
+        $user_code  = trim($this->mybsdbmod->request->getPost('user_code'));
+        $new_status = (int)$this->mybsdbmod->request->getPost('new_status');
+
+        if (empty($user_code)) {
+            return ['status' => 'error', 'message' => 'Invalid request.'];
+        }
+
+        $this->mybsdbmod->exec("UPDATE `users` 
+                                SET    `status` = {$new_status} 
+                                WHERE  `user_code` = '{$user_code}' 
+                                AND    `user_role` = 2");
+
+        return ['status' => 'ok'];
+    }
+
 } // end MyBrwngModel
