@@ -11,10 +11,14 @@
         <button class="btn btn-sm btn-outline-secondary filter_chip" data-status="3" style="font-size:12px;">Overdue <span id="chip_overdue" class="ms-1">—</span></button>
         <button class="btn btn-sm btn-outline-secondary filter_chip" data-status="2" style="font-size:12px;">Returned <span id="chip_returned" class="ms-1">—</span></button>
     </div>
-    <div class="d-flex gap-2">
+</div>
+
+<!-- Search + Export -->
+<div class="mb-2">
+    <div class="d-flex gap-2 align-items-center">
         <input type="text" id="search_borrowings_admin" class="form-control form-control-sm"
-            placeholder="Search student or tool..." style="font-size:13px; min-width:220px;">
-        <button class="btn btn-sm btn-outline-secondary" id="btnExportCSV" style="font-size:13px;">
+            placeholder="Search student or tool..." style="font-size:13px; width:244px;">
+        <button class="btn btn-sm btn-outline-secondary" id="btnExportCSV" style="font-size:13px; white-space:nowrap;">
             Export CSV
         </button>
     </div>
