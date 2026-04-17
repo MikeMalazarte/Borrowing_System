@@ -220,6 +220,23 @@ class BorrowSys_Ctrl extends BaseController {
             echo json_encode($this->mybrmod->toggleStudentStatus());
             break;
 
+        case 'ADMIN-PROFILE':
+            $user_role = $session->get('user_role');
+            if ($user_role != 1) {
+                echo view('brwng_auth/login');
+                return;
+            }
+            $data['active_page'] = 'profile';
+            echo view('template/admin_header01', $data);
+            echo view('brwng_ad/ad_profile', $data);
+            echo view('template/admin_footer01');
+            break;
+
+        case 'GET-ADMIN-PROFILE-STATS':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->getAdminProfileStats());
+            break;
+
         
 
 
