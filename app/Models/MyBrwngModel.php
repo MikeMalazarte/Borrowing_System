@@ -785,4 +785,26 @@ class MyBrwngModel extends Model {
         return ['status' => 'ok'];
     }
 
+    public function getAdminProfileStats() {
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `tools` WHERE `status` = 1");
+        $total_tools = $q->getRowArray()['total'];
+
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `users` WHERE `user_role` = 2 AND `status` = 1");
+        $total_students = $q->getRowArray()['total'];
+
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 1");
+        $active_borrowings = $q->getRowArray()['total'];
+
+        $q = $this->mybsdbmod->exec("SELECT COUNT(*) AS total FROM `borrowings` WHERE `status` = 3");
+        $overdue = $q->getRowArray()['total'];
+
+        return [
+            'status'            => 'ok',
+            'total_tools'       => (int)$total_tools,
+            'total_students'    => (int)$total_students,
+            'active_borrowings' => (int)$active_borrowings,
+            'overdue'           => (int)$overdue
+        ];
+    }
+
 } // end MyBrwngModel
