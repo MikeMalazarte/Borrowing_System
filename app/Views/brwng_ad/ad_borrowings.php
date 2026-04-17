@@ -6,10 +6,26 @@
 <!-- Filter Chips + Search + Export -->
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div class="d-flex gap-2 flex-wrap" id="status_filters">
-        <button class="btn btn-sm btn-dark filter_chip" data-status="all" style="font-size:12px;">All <span id="chip_all" class="ms-1">—</span></button>
-        <button class="btn btn-sm btn-outline-secondary filter_chip" data-status="1" style="font-size:12px;">Active <span id="chip_active" class="ms-1">—</span></button>
-        <button class="btn btn-sm btn-outline-secondary filter_chip" data-status="3" style="font-size:12px;">Overdue <span id="chip_overdue" class="ms-1">—</span></button>
-        <button class="btn btn-sm btn-outline-secondary filter_chip" data-status="2" style="font-size:12px;">Returned <span id="chip_returned" class="ms-1">—</span></button>
+        <button class="btn filter_chip" data-status="all"
+            style="font-size:13px; padding:10px 20px; border-radius:8px; background:#1a1a1a; color:#fff; border:none;">
+            All
+            <span id="chip_all" style="font-size:20px; font-weight:400; display:block; line-height:1;">—</span>
+        </button>
+        <button class="btn filter_chip" data-status="1"
+            style="font-size:13px; padding:10px 20px; border-radius:8px; background:#fff; color:#555; border:0.5px solid #e9e9e9;">
+            Active
+            <span id="chip_active" style="font-size:20px; font-weight:400; display:block; line-height:1;">—</span>
+        </button>
+        <button class="btn filter_chip" data-status="3"
+            style="font-size:13px; padding:10px 20px; border-radius:8px; background:#fff; color:#c0392b; border:0.5px solid #f5c6c6;">
+            Overdue
+            <span id="chip_overdue" style="font-size:20px; font-weight:400; display:block; line-height:1;">—</span>
+        </button>
+        <button class="btn filter_chip" data-status="2"
+            style="font-size:13px; padding:10px 20px; border-radius:8px; background:#fff; color:#555; border:0.5px solid #e9e9e9;">
+            Returned
+            <span id="chip_returned" style="font-size:20px; font-weight:400; display:block; line-height:1;">—</span>
+        </button>
     </div>
 </div>
 

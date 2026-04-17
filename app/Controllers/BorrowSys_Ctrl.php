@@ -192,6 +192,35 @@ class BorrowSys_Ctrl extends BaseController {
             }
             $this->mybrmod->exportBorrowingsCSV();
             break;
+        
+        case 'ADMIN-STUDENTS':
+            $user_role = $session->get('user_role');
+            if ($user_role != 1) {
+                echo view('brwng_auth/login');
+                return;
+            }
+            $data['active_page'] = 'students';
+            echo view('template/admin_header01', $data);
+            echo view('brwng_ad/ad_students', $data);
+            echo view('template/admin_footer01');
+            break;
+
+        case 'GET-ADMIN-STUDENTS':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->getAdminStudents());
+            break;
+
+        case 'GET-STUDENT-DETAIL':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->getStudentDetail());
+            break;
+
+        case 'DO-TOGGLE-STUDENT':
+            if ($session->get('user_role') != 1) { echo json_encode(['status' => 'error']); return; }
+            echo json_encode($this->mybrmod->toggleStudentStatus());
+            break;
+
+        
 
 
 
