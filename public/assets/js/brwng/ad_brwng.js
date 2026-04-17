@@ -819,6 +819,73 @@ var AdBrwngSys = function () {
         });
     };
 
+    this.loadAdminProfile = function () {
+        // Load system overview stats
+        $.ajax({
+            type     : 'POST',
+            url      : mesiteurl + 'Borrowing-System',
+            data     : { meaction : 'GET-ADMIN-PROFILE-STATS' },
+            dataType : 'json',
+            success  : function (res) {
+                $('#admin_prof_total_tools').text(res.total_tools);
+                $('#admin_prof_total_students').text(res.total_students);
+                $('#admin_prof_active_borrowings').text(res.active_borrowings);
+                $('#admin_prof_overdue').text(res.overdue);
+            },
+            error : function () {
+                console.error('Failed to load admin profile stats.');
+            }
+        });
+
+        // Change password
+        $(document).on('click', '#btnConfirmAdminChangePassword', function () {
+            var current_password = $.trim($('#admin_current_password').val());
+            var new_password     = $.trim($('#admin_new_password').val());
+            var confirm_password = $.trim($('#admin_confirm_password').val());
+
+            if (current_password === '' || new_password === '' || confirm_password === '') {
+                $('#admin_change_pw_msg').html('<div class="alert alert-danger py-2 small">Please fill in all fields.</div>');
+                return false;
+            }
+
+            if (new_password !== confirm_password) {
+                $('#admin_change_pw_msg').html('<div class="alert alert-danger py-2 small">New passwords do not match.</div>');
+                return false;
+            }
+
+            if (new_password === current_password) {
+                $('#admin_change_pw_msg').html('<div class="alert alert-danger py-2 small">New password must differ from current password.</div>');
+                return false;
+            }
+
+            $.ajax({
+                type     : 'POST',
+                url      : mesiteurl + 'Borrowing-System',
+                data     : {
+                    meaction         : 'DO-CHANGE-PASSWORD',
+                    current_password : current_password,
+                    new_password     : new_password
+                },
+                dataType : 'json',
+                success  : function (data) {
+                    if (data.status === 'ok') {
+                        $('#admin_change_pw_msg').html('<div class="alert alert-success py-2 small">Password updated successfully!</div>');
+                        setTimeout(function () {
+                            bootstrap.Modal.getInstance(document.getElementById('modalAdminChangePassword')).hide();
+                            $('#admin_current_password, #admin_new_password, #admin_confirm_password').val('');
+                            $('#admin_change_pw_msg').html('');
+                        }, 1500);
+                    } else {
+                        $('#admin_change_pw_msg').html('<div class="alert alert-danger py-2 small">' + data.message + '</div>');
+                    }
+                },
+                error : function () {
+                    $('#admin_change_pw_msg').html('<div class="alert alert-danger py-2 small">Something went wrong.</div>');
+                }
+            });
+        });
+    };
+
 };
 
 // Initialize on DOM ready
@@ -826,8 +893,9 @@ $(document).ready(function () {
     var me = new AdBrwngSys();
     me.doLogout();
 
-    if ($('#stat_total_tools').length > 0)      { me.loadAdminDashboard(); }
-    if ($('#admin_tools_list').length > 0)      { me.loadAdminTools(); }
-    if ($('#admin_borrowings_list').length > 0) { me.loadAdminBorrowings(); }
-    if ($('#admin_students_list').length > 0)   { me.loadAdminStudents(); }
+    if ($('#stat_total_tools').length > 0)        { me.loadAdminDashboard(); }
+    if ($('#admin_tools_list').length > 0)        { me.loadAdminTools(); }
+    if ($('#admin_borrowings_list').length > 0)   { me.loadAdminBorrowings(); }
+    if ($('#admin_students_list').length > 0)     { me.loadAdminStudents(); }
+    if ($('#admin_prof_total_tools').length > 0)  { me.loadAdminProfile(); }
 });
